@@ -1,0 +1,25 @@
+[Server]
+Host      = "localhost"
+Port      = 8075
+IsDevel   = true
+EnableVFS = true
+
+[Database]
+Addr            = "localhost:5432"
+User            = "postgres"
+Database        = "workout"
+Password        = ""
+PoolSize        = 5
+ApplicationName = "workoutbot"
+
+[Bot]
+Token = ""
+
+[VFS]
+MaxFileSize      = 33_554_432 # 32MB
+Path             = "./media/"
+WebPath          = "/media/"
+UploadFormName   = "Filedata"
+SkipFolderVerify = false
+Extensions       = ["jpg", "jpeg", "png", "gif"]
+MimeTypes        = ["image/jpeg", "image/png", "image/gif"]

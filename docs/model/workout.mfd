@@ -1,0 +1,14 @@
+<Project xmlns:xsi="" xmlns:xsd="">
+    <Name>workout.mfd</Name>
+    <PackageNames>
+        <string>common</string>
+        <string>vfs</string>
+        <string>training</string>
+        <string>user</string>
+    </PackageNames>
+    <Languages>
+        <string>en</string>
+    </Languages>
+    <GoPGVer>10</GoPGVer>
+    <CustomTypes></CustomTypes>
+</Project>
