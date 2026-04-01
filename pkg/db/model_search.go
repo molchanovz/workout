@@ -267,6 +267,7 @@ type ApproachSearch struct {
 	ExerciseID *int
 	Reps       *int
 	Weight     *int
+	Duration   *int
 	CreatedAt  *time.Time
 	StatusID   *int
 	IDs        []int
@@ -287,6 +288,9 @@ func (as *ApproachSearch) Apply(query *orm.Query) *orm.Query {
 	}
 	if as.Weight != nil {
 		as.where(query, Tables.Approach.Alias, Columns.Approach.Weight, as.Weight)
+	}
+	if as.Duration != nil {
+		as.where(query, Tables.Approach.Alias, Columns.Approach.Duration, as.Duration)
 	}
 	if as.CreatedAt != nil {
 		as.where(query, Tables.Approach.Alias, Columns.Approach.CreatedAt, as.CreatedAt)
@@ -371,6 +375,7 @@ type ExerciseSearch struct {
 	Title      *string
 	CategoryID *int
 	SiteUserID *int
+	TypeID     *int
 	StatusID   *int
 	IDs        []int
 	TitleILike *string
@@ -391,6 +396,9 @@ func (es *ExerciseSearch) Apply(query *orm.Query) *orm.Query {
 	}
 	if es.SiteUserID != nil {
 		es.where(query, Tables.Exercise.Alias, Columns.Exercise.SiteUserID, es.SiteUserID)
+	}
+	if es.TypeID != nil {
+		es.where(query, Tables.Exercise.Alias, Columns.Exercise.TypeID, es.TypeID)
 	}
 	if es.StatusID != nil {
 		es.where(query, Tables.Exercise.Alias, Columns.Exercise.StatusID, es.StatusID)

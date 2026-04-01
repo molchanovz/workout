@@ -8,24 +8,28 @@ import (
 type Step string
 
 const (
-	StepSelectCategory    Step = "select_category"
-	StepSelectSubcategory Step = "select_subcategory"
-	StepSelectExercise    Step = "select_exercise"
-	StepEnterReps         Step = "enter_reps"
-	StepEnterWeight       Step = "enter_weight"
-	StepEnterCategoryName Step = "enter_category_name"
-	StepEnterExerciseName Step = "enter_exercise_name"
+	StepSelectCategory     Step = "select_category"
+	StepSelectSubcategory  Step = "select_subcategory"
+	StepSelectExercise     Step = "select_exercise"
+	StepEnterReps          Step = "enter_reps"
+	StepEnterWeight        Step = "enter_weight"
+	StepEnterCategoryName  Step = "enter_category_name"
+	StepEnterExerciseName  Step = "enter_exercise_name"
+	StepSelectExerciseType Step = "select_exercise_type"
+	StepEnterDuration      Step = "enter_duration"
 )
 
 type UserState struct {
-	Step       Step
-	TrainingID int
-	Date       string
-	CategoryID int
-	ExerciseID int
-	ApproachID int
-	Reps       int
-	ExpiresAt  time.Time
+	Step         Step
+	TrainingID   int
+	Date         string
+	CategoryID   int
+	ExerciseID   int
+	ApproachID   int
+	Reps         int
+	ExerciseType int
+	Duration     int
+	ExpiresAt    time.Time
 }
 
 type StateStore struct {

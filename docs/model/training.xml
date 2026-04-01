@@ -7,6 +7,7 @@
                 <Attribute Name="ExerciseID" DBName="exerciseId" DBType="int4" GoType="*int" PK="false" FK="Exercise" Nullable="Yes" Addable="true" Updatable="true" Min="0" Max="0"></Attribute>
                 <Attribute Name="Reps" DBName="reps" DBType="int4" GoType="*int" PK="false" Nullable="Yes" Addable="true" Updatable="true" Min="0" Max="0"></Attribute>
                 <Attribute Name="Weight" DBName="weight" DBType="int4" GoType="*int" PK="false" Nullable="Yes" Addable="true" Updatable="true" Min="0" Max="0"></Attribute>
+                <Attribute Name="Duration" DBName="duration" DBType="int4" GoType="*int" PK="false" Nullable="Yes" Addable="true" Updatable="true" Min="0" Max="0"></Attribute>
                 <Attribute Name="CreatedAt" DBName="createdAt" DBType="timestamptz" GoType="*time.Time" PK="false" Nullable="Yes" Addable="false" Updatable="false" Min="0" Max="0" HasDefault="true"></Attribute>
                 <Attribute Name="StatusID" DBName="statusId" DBType="int4" GoType="int" PK="false" Nullable="No" Addable="true" Updatable="true" Min="0" Max="0"></Attribute>
             </Attributes>
@@ -33,6 +34,7 @@
                 <Attribute Name="Title" DBName="title" DBType="varchar" GoType="string" PK="false" Nullable="No" Addable="true" Updatable="true" Min="0" Max="128"></Attribute>
                 <Attribute Name="CategoryID" DBName="categoryId" DBType="int4" GoType="int" PK="false" FK="Category" Nullable="No" Addable="true" Updatable="true" Min="0" Max="0"></Attribute>
                 <Attribute Name="SiteUserID" DBName="siteUserId" DBType="int4" GoType="*int" PK="false" FK="SiteUser" Nullable="Yes" Addable="true" Updatable="true" Min="0" Max="0"></Attribute>
+                <Attribute Name="TypeID" DBName="typeId" DBType="int4" GoType="int" PK="false" Nullable="No" Addable="true" Updatable="true" Min="0" Max="0" HasDefault="true"></Attribute>
                 <Attribute Name="StatusID" DBName="statusId" DBType="int4" GoType="int" PK="false" Nullable="No" Addable="true" Updatable="true" Min="0" Max="0"></Attribute>
             </Attributes>
             <Searches>

@@ -10,6 +10,11 @@ import (
 	"workout/pkg/db"
 )
 
+const (
+	ExerciseTypeStrength = 1
+	ExerciseTypeTimed    = 2
+)
+
 type TrainingManager struct {
 	embedlog.Logger
 	dbo db.DB
@@ -280,8 +285,90 @@ func (tm TrainingManager) DeleteTraining(ctx context.Context, tgId, trainingId i
 			return errors.New("delete training failed")
 		}
 
-		return tr.DeleteApproachesByIDs(ctx, training.ApproachIDs)
+		for _, id := range training.ApproachIDs {
+			if _, err := tr.DeleteApproach(ctx, id); err != nil {
+				return err
+			}
+		}
+		return nil
 	})
+}
+
+// ExerciseType returns the TypeID of the given exercise.
+func (tm TrainingManager) ExerciseType(ctx context.Context, tgId, exerciseId int) (int, error) {
+	exercise, err := tm.tr.ExerciseByID(ctx, exerciseId)
+	if err != nil {
+		return ExerciseTypeStrength, err
+	} else if exercise == nil {
+		return ExerciseTypeStrength, nil
+	}
+	return exercise.TypeID, nil
+}
+
+// AddTimedApproach creates an approach with Duration set and appends it to the training.
+func (tm TrainingManager) AddTimedApproach(ctx context.Context, tgId, trainingId, exerciseId, duration int) error {
+	user, err := tm.ur.OneSiteUser(ctx, &db.SiteUserSearch{TgID: &tgId})
+	if err != nil {
+		return err
+	} else if user == nil {
+		return errors.New("user not found")
+	}
+
+	training, err := tm.tr.TrainingByID(ctx, trainingId)
+	if err != nil {
+		return err
+	}
+
+	return tm.dbo.RunInLock(ctx, fmt.Sprintf("training#%v", training.ID), func(tx *pg.Tx) error {
+		trainingRepo := tm.tr.WithTransaction(tx)
+
+		approach, err := trainingRepo.AddApproach(ctx, &db.Approach{
+			ExerciseID: &exerciseId,
+			Duration:   &duration,
+			CreatedAt:  Ptr(time.Now()),
+			StatusID:   db.StatusEnabled,
+		})
+		if err != nil {
+			return err
+		}
+
+		training.ApproachIDs = append(training.ApproachIDs, approach.ID)
+		updated, err := trainingRepo.UpdateTraining(ctx, training, db.WithColumns(db.Columns.Training.ApproachIDs))
+		if err != nil {
+			return err
+		} else if !updated {
+			return errors.New("update training failed")
+		}
+		return nil
+	})
+}
+
+// UpdateTimedApproach updates only Duration of an existing approach.
+func (tm TrainingManager) UpdateTimedApproach(ctx context.Context, tgId, approachId, duration int) error {
+	user, err := tm.ur.OneSiteUser(ctx, &db.SiteUserSearch{TgID: &tgId})
+	if err != nil {
+		return err
+	} else if user == nil {
+		return errors.New("user not found")
+	}
+
+	approach, err := tm.tr.ApproachByID(ctx, approachId)
+	if err != nil {
+		return err
+	} else if approach == nil {
+		return errors.New("approach not found")
+	}
+
+	approach.Duration = &duration
+	updated, err := tm.tr.UpdateApproach(ctx, approach,
+		db.WithColumns(db.Columns.Approach.Duration),
+	)
+	if err != nil {
+		return err
+	} else if !updated {
+		return errors.New("update approach failed")
+	}
+	return nil
 }
 
 func (tm TrainingManager) NewApproach(ctx context.Context, tgId, trainingId int) error {

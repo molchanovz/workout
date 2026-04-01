@@ -40,6 +40,7 @@ const (
 
 	SelectParentCategoryCallback   = "selectParentCategory"   // _CID (2 parts)
 	SelectExerciseCategoryCallback = "selectExerciseCategory" // _CID (2 parts)
+	SelectExerciseTypeCallback     = "selectExerciseType"     // _TYPE (2 parts)
 )
 
 type Config struct {
@@ -82,6 +83,7 @@ func (bm *Manager) RegisterBotHandlers(b *bot.Bot) {
 
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, SelectCategoryCallback, bot.MatchTypePrefix, bm.selectCategory)
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, SelectExerciseCategoryCallback, bot.MatchTypePrefix, bm.selectExerciseCategory)
+	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, SelectExerciseTypeCallback, bot.MatchTypePrefix, bm.selectExerciseTypeHandler)
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, SelectExerciseCallback, bot.MatchTypePrefix, bm.selectExercise)
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, EditApproachCallback, bot.MatchTypePrefix, bm.editApproach)
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, DeleteApproachCallback, bot.MatchTypePrefix, bm.deleteApproach)
@@ -170,15 +172,50 @@ func (bm *Manager) textInputHandler(ctx context.Context, b *bot.Bot, update *mod
 		bm.sendSettingsMessage(ctx, b, chatID, "Категория создана!")
 
 	case StepEnterExerciseName:
-		_, err := bm.cm.AddExercise(ctx, int(tgId), strings.TrimSpace(text), state.CategoryID)
+		state.Step = StepSelectExerciseType
+		state.Reps = 0 // reuse Reps field to store nothing; store name via ExerciseType trick
+		// Save name temporarily — we need it for the type selection callback.
+		// Store name in Date field (not ideal but avoids a new field) — actually add ExerciseName field is better.
+		// Instead: immediately send type keyboard and store step.
+		bm.states.Set(tgId, &UserState{
+			Step:       StepSelectExerciseType,
+			CategoryID: state.CategoryID,
+			// store name encoded — we pass it via callback, so we need another approach.
+			// Use a separate map or encode name in state. Since UserState has no name field,
+			// we use the Date field (string) to temporarily hold the exercise name.
+			Date: strings.TrimSpace(text),
+		})
+		markup := exerciseTypeMarkup()
+		_, err := b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID:      chatID,
+			Text:        "Выберите тип упражнения:",
+			ReplyMarkup: &markup,
+		})
 		if err != nil {
-			bm.Logger.Errorf("add exercise failed: %v", err)
-			bm.sendText(ctx, b, chatID, "Ошибка при создании упражнения.")
+			bm.Logger.Errorf("send exercise type markup failed: %v", err)
+		}
+
+	case StepEnterDuration:
+		duration, err := parseDuration(strings.TrimSpace(text))
+		if err != nil || duration <= 0 {
+			bm.sendText(ctx, b, chatID, "Введите корректное время (например 90 или 1:30):")
+			return
+		}
+
+		var execErr error
+		if state.ApproachID != 0 {
+			execErr = bm.tm.UpdateTimedApproach(ctx, int(tgId), state.ApproachID, duration)
+		} else {
+			execErr = bm.tm.AddTimedApproach(ctx, int(tgId), state.TrainingID, state.ExerciseID, duration)
+		}
+		if execErr != nil {
+			bm.Logger.Errorf("save timed approach failed: %v", execErr)
+			bm.sendText(ctx, b, chatID, "Ошибка при сохранении подхода.")
 			bm.states.Delete(tgId)
 			return
 		}
 		bm.states.Delete(tgId)
-		bm.sendSettingsMessage(ctx, b, chatID, "Упражнение создано!")
+		bm.sendApproachListMessage(ctx, b, chatID, int(tgId), state.ExerciseID, state.TrainingID, state.Date)
 	}
 }
 
@@ -545,14 +582,22 @@ func (bm *Manager) newApproach(ctx context.Context, b *bot.Bot, update *models.U
 		return
 	}
 
-	bm.states.Set(tgId, &UserState{
-		Step:       StepEnterReps,
-		TrainingID: trainingId,
-		Date:       dateStr,
-		ExerciseID: exerciseId,
-	})
-
-	bm.sendForceReply(ctx, b, tgId, "Введите количество повторений:")
+	exType, _ := bm.tm.ExerciseType(ctx, int(tgId), exerciseId)
+	state := &UserState{
+		TrainingID:   trainingId,
+		Date:         dateStr,
+		ExerciseID:   exerciseId,
+		ExerciseType: exType,
+	}
+	if exType == workout.ExerciseTypeTimed {
+		state.Step = StepEnterDuration
+		bm.states.Set(tgId, state)
+		bm.sendForceReply(ctx, b, tgId, "Введите время (секунды или MM:SS):")
+	} else {
+		state.Step = StepEnterReps
+		bm.states.Set(tgId, state)
+		bm.sendForceReply(ctx, b, tgId, "Введите количество повторений:")
+	}
 }
 
 func (bm *Manager) selectCategory(ctx context.Context, b *bot.Bot, update *models.Update) {
@@ -696,15 +741,23 @@ func (bm *Manager) editApproach(ctx context.Context, b *bot.Bot, update *models.
 		return
 	}
 
-	bm.states.Set(tgId, &UserState{
-		Step:       StepEnterReps,
-		TrainingID: trainingId,
-		Date:       dateStr,
-		ApproachID: approachID,
-		ExerciseID: exerciseID,
-	})
-
-	bm.sendForceReply(ctx, b, tgId, "Введите новое количество повторений:")
+	exType, _ := bm.tm.ExerciseType(ctx, int(tgId), exerciseID)
+	state := &UserState{
+		TrainingID:   trainingId,
+		Date:         dateStr,
+		ApproachID:   approachID,
+		ExerciseID:   exerciseID,
+		ExerciseType: exType,
+	}
+	if exType == workout.ExerciseTypeTimed {
+		state.Step = StepEnterDuration
+		bm.states.Set(tgId, state)
+		bm.sendForceReply(ctx, b, tgId, "Введите новое время (секунды или MM:SS):")
+	} else {
+		state.Step = StepEnterReps
+		bm.states.Set(tgId, state)
+		bm.sendForceReply(ctx, b, tgId, "Введите новое количество повторений:")
+	}
 }
 
 func (bm *Manager) deleteApproach(ctx context.Context, b *bot.Bot, update *models.Update) {
@@ -929,6 +982,38 @@ func (bm *Manager) selectExerciseCategory(ctx context.Context, b *bot.Bot, updat
 	bm.sendForceReply(ctx, b, tgId, "Введите название упражнения:")
 }
 
+func (bm *Manager) selectExerciseTypeHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
+	// selectExerciseType_TYPE (2 parts)
+	tgId := update.CallbackQuery.From.ID
+
+	split := strings.Split(update.CallbackQuery.Data, "_")
+	if len(split) != 2 {
+		bm.Logger.Errorf("bad callbackQuery data")
+		return
+	}
+
+	typeID, err := strconv.Atoi(split[1])
+	if err != nil {
+		return
+	}
+
+	state := bm.states.Get(tgId)
+	if state == nil || state.Step != StepSelectExerciseType {
+		return
+	}
+
+	name := state.Date // exercise name was stored in Date field
+	_, err = bm.cm.AddExercise(ctx, int(tgId), name, state.CategoryID, typeID)
+	if err != nil {
+		bm.Logger.Errorf("add exercise failed: %v", err)
+		bm.sendText(ctx, b, tgId, "Ошибка при создании упражнения.")
+		bm.states.Delete(tgId)
+		return
+	}
+	bm.states.Delete(tgId)
+	bm.sendSettingsMessage(ctx, b, tgId, "Упражнение создано!")
+}
+
 // --- helpers ---
 
 func (bm *Manager) sendText(ctx context.Context, b *bot.Bot, chatID int64, text string) {
@@ -991,6 +1076,22 @@ func (bm *Manager) sendSettingsMessage(ctx context.Context, b *bot.Bot, chatID i
 	if err != nil {
 		bm.Logger.Errorf("send settings failed: %v", err)
 	}
+}
+
+func parseDuration(s string) (int, error) {
+	if strings.Contains(s, ":") {
+		parts := strings.SplitN(s, ":", 2)
+		minutes, err := strconv.Atoi(parts[0])
+		if err != nil {
+			return 0, err
+		}
+		secs, err := strconv.Atoi(parts[1])
+		if err != nil {
+			return 0, err
+		}
+		return minutes*60 + secs, nil
+	}
+	return strconv.Atoi(s)
 }
 
 func daysIn(t time.Time) int {

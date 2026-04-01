@@ -100,7 +100,7 @@ func (m *CategoryManager) AddCategory(ctx context.Context, tgId int, title strin
 }
 
 // AddExercise creates a new exercise for the user.
-func (m *CategoryManager) AddExercise(ctx context.Context, tgId int, title string, categoryID int) (*db.Exercise, error) {
+func (m *CategoryManager) AddExercise(ctx context.Context, tgId int, title string, categoryID, typeID int) (*db.Exercise, error) {
 	user, err := m.ur.OneSiteUser(ctx, &db.SiteUserSearch{TgID: &tgId})
 	if err != nil {
 		return nil, err
@@ -111,6 +111,7 @@ func (m *CategoryManager) AddExercise(ctx context.Context, tgId int, title strin
 	return m.tr.AddExercise(ctx, &db.Exercise{
 		Title:      title,
 		CategoryID: categoryID,
+		TypeID:     typeID,
 		SiteUserID: &user.ID,
 		StatusID:   db.StatusEnabled,
 	})

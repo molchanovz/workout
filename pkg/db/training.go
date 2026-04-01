@@ -135,18 +135,6 @@ func (tr TrainingRepo) DeleteApproach(ctx context.Context, id int) (deleted bool
 	return tr.UpdateApproach(ctx, approach, WithColumns(Columns.Approach.StatusID))
 }
 
-// DeleteApproachesByIDs soft-deletes multiple approaches in a single query.
-func (tr TrainingRepo) DeleteApproachesByIDs(ctx context.Context, ids []int) error {
-	if len(ids) == 0 {
-		return nil
-	}
-	_, err := tr.db.ModelContext(ctx, (*Approach)(nil)).
-		Set("status_id = ?", StatusDeleted).
-		Where("id IN (?)", pg.In(ids)).
-		Update()
-	return err
-}
-
 /*** Category ***/
 
 // FullCategory returns full joins with all columns

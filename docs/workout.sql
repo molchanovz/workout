@@ -61,6 +61,7 @@ CREATE TABLE "exercises" (
 	"title" varchar(128) NOT NULL,
 	"categoryId" integer NOT NULL,
 	"siteUserId" integer,
+	"typeId" integer NOT NULL DEFAULT 1,
 	"statusId" integer NOT NULL,
 	CONSTRAINT "pk_exercises" PRIMARY KEY("exerciseId")
 );
@@ -79,6 +80,7 @@ CREATE TABLE "approaches" (
 	"exerciseId" integer,
 	"reps" integer,
 	"weight" integer,
+	"duration" integer,
 	"createdAt" timestamptz DEFAULT now(),
 	"statusId" integer NOT NULL,
 	CONSTRAINT "pk_approaches" PRIMARY KEY("approachId")

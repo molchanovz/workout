@@ -23,7 +23,7 @@ var Columns = struct {
 		ParentFolder string
 	}
 	Approach struct {
-		ID, ExerciseID, Reps, Weight, CreatedAt, StatusID string
+		ID, ExerciseID, Reps, Weight, Duration, CreatedAt, StatusID string
 
 		Exercise string
 	}
@@ -33,7 +33,7 @@ var Columns = struct {
 		ParentCategory, SiteUser string
 	}
 	Exercise struct {
-		ID, Title, CategoryID, SiteUserID, StatusID string
+		ID, Title, CategoryID, SiteUserID, TypeID, StatusID string
 
 		Category, SiteUser string
 	}
@@ -91,7 +91,7 @@ var Columns = struct {
 		ParentFolder: "ParentFolder",
 	},
 	Approach: struct {
-		ID, ExerciseID, Reps, Weight, CreatedAt, StatusID string
+		ID, ExerciseID, Reps, Weight, Duration, CreatedAt, StatusID string
 
 		Exercise string
 	}{
@@ -99,6 +99,7 @@ var Columns = struct {
 		ExerciseID: "exerciseId",
 		Reps:       "reps",
 		Weight:     "weight",
+		Duration:   "duration",
 		CreatedAt:  "createdAt",
 		StatusID:   "statusId",
 
@@ -119,7 +120,7 @@ var Columns = struct {
 		SiteUser:       "SiteUser",
 	},
 	Exercise: struct {
-		ID, Title, CategoryID, SiteUserID, StatusID string
+		ID, Title, CategoryID, SiteUserID, TypeID, StatusID string
 
 		Category, SiteUser string
 	}{
@@ -127,6 +128,7 @@ var Columns = struct {
 		Title:      "title",
 		CategoryID: "categoryId",
 		SiteUserID: "siteUserId",
+		TypeID:     "typeId",
 		StatusID:   "statusId",
 
 		Category: "Category",
@@ -284,6 +286,7 @@ type Approach struct {
 	ExerciseID *int       `pg:"exerciseId"`
 	Reps       *int       `pg:"reps"`
 	Weight     *int       `pg:"weight"`
+	Duration   *int       `pg:"duration"`
 	CreatedAt  *time.Time `pg:"createdAt"`
 	StatusID   int        `pg:"statusId,use_zero"`
 
@@ -310,6 +313,7 @@ type Exercise struct {
 	Title      string `pg:"title,use_zero"`
 	CategoryID int    `pg:"categoryId,use_zero"`
 	SiteUserID *int   `pg:"siteUserId"`
+	TypeID     int    `pg:"typeId,use_zero"`
 	StatusID   int    `pg:"statusId,use_zero"`
 
 	Category *Category `pg:"fk:categoryId,rel:has-one"`

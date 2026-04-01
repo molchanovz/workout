@@ -78,13 +78,12 @@ func approachListMarkup(approaches workout.Approaches, exerciseId, trainingId in
 
 	for i := range approaches {
 		a := approaches[i]
-		reps := strconv.Itoa(workout.Deref(a.Reps, 0))
-		weight := strconv.Itoa(workout.Deref(a.Weight, 0))
 
 		allButtons = append(allButtons,
 			[]models.InlineKeyboardButton{
-				{Text: fmt.Sprintf("%d. %s пов × %s кг", i+1, reps, weight), CallbackData: "ignore"},
+				{Text: formatApproach(i, a.Approach), CallbackData: "ignore"},
 			},
+
 			[]models.InlineKeyboardButton{
 				{
 					Text:         "✏️ Изменить",
@@ -169,6 +168,28 @@ func parentCategoryMarkup(categories []db.Category) models.InlineKeyboardMarkup 
 		{Text: "Назад", CallbackData: SettingsCallback},
 	})
 	return models.InlineKeyboardMarkup{InlineKeyboard: allButtons}
+}
+
+func formatApproach(i int, a db.Approach) string {
+	if a.Duration != nil {
+		return fmt.Sprintf("%d. %s", i+1, formatDuration(*a.Duration))
+	}
+	return fmt.Sprintf("%d. %s пов × %s кг", i+1,
+		strconv.Itoa(workout.Deref(a.Reps, 0)),
+		strconv.Itoa(workout.Deref(a.Weight, 0)))
+}
+
+func formatDuration(secs int) string {
+	return fmt.Sprintf("%d:%02d", secs/60, secs%60)
+}
+
+func exerciseTypeMarkup() models.InlineKeyboardMarkup {
+	return models.InlineKeyboardMarkup{InlineKeyboard: [][]models.InlineKeyboardButton{
+		{
+			{Text: "Силовое", CallbackData: fmt.Sprintf("%v_1", SelectExerciseTypeCallback)},
+			{Text: "Временное", CallbackData: fmt.Sprintf("%v_2", SelectExerciseTypeCallback)},
+		},
+	}}
 }
 
 func exerciseCategoryMarkup(categories []db.Category) models.InlineKeyboardMarkup {
