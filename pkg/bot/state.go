@@ -20,16 +20,18 @@ const (
 )
 
 type UserState struct {
-	Step         Step
-	TrainingID   int
-	Date         string
-	CategoryID   int
-	ExerciseID   int
-	ApproachID   int
-	Reps         int
-	ExerciseType int
-	Duration     int
-	ExpiresAt    time.Time
+	Step            Step
+	TrainingID      int
+	Date            string
+	CategoryID      int
+	ExerciseID      int
+	ApproachID      int
+	Reps            int
+	ExerciseType    int
+	Duration        int
+	ExpiresAt       time.Time
+	BotMessageID    int // ID основного bot-сообщения для редактирования по завершении ввода
+	PromptMessageID int // ID prompt-сообщения (ForceReply) для удаления после ответа
 }
 
 type StateStore struct {

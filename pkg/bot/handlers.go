@@ -121,6 +121,8 @@ func (bm *Manager) textInputHandler(ctx context.Context, b *bot.Bot, update *mod
 	chatID := update.Message.Chat.ID
 	text := update.Message.Text
 
+	bm.deleteMessages(ctx, b, chatID, update.Message.ID, state.PromptMessageID)
+
 	switch state.Step {
 	case StepEnterReps:
 		reps, err := strconv.Atoi(strings.TrimSpace(text))
@@ -131,7 +133,8 @@ func (bm *Manager) textInputHandler(ctx context.Context, b *bot.Bot, update *mod
 		state.Reps = reps
 		state.Step = StepEnterWeight
 		bm.states.Set(tgId, state)
-		bm.sendForceReply(ctx, b, chatID, "Введите вес (кг):")
+		state.PromptMessageID = bm.sendForceReply(ctx, b, chatID, "Введите вес (кг):")
+		bm.states.Set(tgId, state)
 
 	case StepEnterWeight:
 		weight, err := strconv.ParseFloat(strings.TrimSpace(text), 64)
@@ -153,8 +156,9 @@ func (bm *Manager) textInputHandler(ctx context.Context, b *bot.Bot, update *mod
 			return
 		}
 
+		botMsgID := state.BotMessageID
 		bm.states.Delete(tgId)
-		bm.sendApproachListMessage(ctx, b, chatID, int(tgId), state.ExerciseID, state.TrainingID, state.Date)
+		bm.sendApproachListMessage(ctx, b, chatID, int(tgId), state.ExerciseID, state.TrainingID, state.Date, botMsgID)
 
 	case StepEnterCategoryName:
 		var parentID *int
@@ -168,25 +172,21 @@ func (bm *Manager) textInputHandler(ctx context.Context, b *bot.Bot, update *mod
 			bm.states.Delete(tgId)
 			return
 		}
+		botMsgID := state.BotMessageID
 		bm.states.Delete(tgId)
-		bm.sendSettingsMessage(ctx, b, chatID, "Категория создана!")
+		bm.sendSettingsMessage(ctx, b, chatID, "Категория создана!", botMsgID)
 
 	case StepEnterExerciseName:
-		state.Step = StepSelectExerciseType
-		state.Reps = 0 // reuse Reps field to store nothing; store name via ExerciseType trick
-		// Save name temporarily — we need it for the type selection callback.
-		// Store name in Date field (not ideal but avoids a new field) — actually add ExerciseName field is better.
-		// Instead: immediately send type keyboard and store step.
+		botMsgID := state.BotMessageID
 		bm.states.Set(tgId, &UserState{
-			Step:       StepSelectExerciseType,
-			CategoryID: state.CategoryID,
-			// store name encoded — we pass it via callback, so we need another approach.
-			// Use a separate map or encode name in state. Since UserState has no name field,
-			// we use the Date field (string) to temporarily hold the exercise name.
-			Date: strings.TrimSpace(text),
+			Step:         StepSelectExerciseType,
+			CategoryID:   state.CategoryID,
+			Date:         strings.TrimSpace(text),
+			BotMessageID: botMsgID,
 		})
 		markup := exerciseTypeMarkup()
-		_, err := b.SendMessage(ctx, &bot.SendMessageParams{
+		_, err := b.EditMessageText(ctx, &bot.EditMessageTextParams{
+			MessageID:   botMsgID,
 			ChatID:      chatID,
 			Text:        "Выберите тип упражнения:",
 			ReplyMarkup: &markup,
@@ -214,8 +214,9 @@ func (bm *Manager) textInputHandler(ctx context.Context, b *bot.Bot, update *mod
 			bm.states.Delete(tgId)
 			return
 		}
+		botMsgID := state.BotMessageID
 		bm.states.Delete(tgId)
-		bm.sendApproachListMessage(ctx, b, chatID, int(tgId), state.ExerciseID, state.TrainingID, state.Date)
+		bm.sendApproachListMessage(ctx, b, chatID, int(tgId), state.ExerciseID, state.TrainingID, state.Date, botMsgID)
 	}
 }
 
@@ -583,20 +584,24 @@ func (bm *Manager) newApproach(ctx context.Context, b *bot.Bot, update *models.U
 	}
 
 	exType, _ := bm.tm.ExerciseType(ctx, int(tgId), exerciseId)
+	botMsgID := int(update.CallbackQuery.Message.Message.ID)
 	state := &UserState{
 		TrainingID:   trainingId,
 		Date:         dateStr,
 		ExerciseID:   exerciseId,
 		ExerciseType: exType,
+		BotMessageID: botMsgID,
 	}
 	if exType == workout.ExerciseTypeTimed {
 		state.Step = StepEnterDuration
 		bm.states.Set(tgId, state)
-		bm.sendForceReply(ctx, b, tgId, "Введите время (секунды или MM:SS):")
+		state.PromptMessageID = bm.sendForceReply(ctx, b, tgId, "Введите время (секунды или MM:SS):")
+		bm.states.Set(tgId, state)
 	} else {
 		state.Step = StepEnterReps
 		bm.states.Set(tgId, state)
-		bm.sendForceReply(ctx, b, tgId, "Введите количество повторений:")
+		state.PromptMessageID = bm.sendForceReply(ctx, b, tgId, "Введите количество повторений:")
+		bm.states.Set(tgId, state)
 	}
 }
 
@@ -742,21 +747,25 @@ func (bm *Manager) editApproach(ctx context.Context, b *bot.Bot, update *models.
 	}
 
 	exType, _ := bm.tm.ExerciseType(ctx, int(tgId), exerciseID)
+	botMsgID := int(update.CallbackQuery.Message.Message.ID)
 	state := &UserState{
 		TrainingID:   trainingId,
 		Date:         dateStr,
 		ApproachID:   approachID,
 		ExerciseID:   exerciseID,
 		ExerciseType: exType,
+		BotMessageID: botMsgID,
 	}
 	if exType == workout.ExerciseTypeTimed {
 		state.Step = StepEnterDuration
 		bm.states.Set(tgId, state)
-		bm.sendForceReply(ctx, b, tgId, "Введите новое время (секунды или MM:SS):")
+		state.PromptMessageID = bm.sendForceReply(ctx, b, tgId, "Введите новое время (секунды или MM:SS):")
+		bm.states.Set(tgId, state)
 	} else {
 		state.Step = StepEnterReps
 		bm.states.Set(tgId, state)
-		bm.sendForceReply(ctx, b, tgId, "Введите новое количество повторений:")
+		state.PromptMessageID = bm.sendForceReply(ctx, b, tgId, "Введите новое количество повторений:")
+		bm.states.Set(tgId, state)
 	}
 }
 
@@ -790,7 +799,8 @@ func (bm *Manager) deleteApproach(ctx context.Context, b *bot.Bot, update *model
 		return
 	}
 
-	bm.sendApproachListMessage(ctx, b, tgId, int(tgId), exerciseID, trainingId, dateStr)
+	messageID := int(update.CallbackQuery.Message.Message.ID)
+	bm.sendApproachListMessage(ctx, b, tgId, int(tgId), exerciseID, trainingId, dateStr, messageID)
 }
 
 func (bm *Manager) deleteTraining(ctx context.Context, b *bot.Bot, update *models.Update) {
@@ -929,12 +939,15 @@ func (bm *Manager) selectParentCategory(ctx context.Context, b *bot.Bot, update 
 		return
 	}
 
-	bm.states.Set(tgId, &UserState{
-		Step:       StepEnterCategoryName,
-		CategoryID: parentID,
-	})
-
-	bm.sendForceReply(ctx, b, tgId, "Введите название категории:")
+	botMsgID := int(update.CallbackQuery.Message.Message.ID)
+	state := &UserState{
+		Step:         StepEnterCategoryName,
+		CategoryID:   parentID,
+		BotMessageID: botMsgID,
+	}
+	bm.states.Set(tgId, state)
+	state.PromptMessageID = bm.sendForceReply(ctx, b, tgId, "Введите название категории:")
+	bm.states.Set(tgId, state)
 }
 
 func (bm *Manager) addExerciseHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
@@ -974,12 +987,15 @@ func (bm *Manager) selectExerciseCategory(ctx context.Context, b *bot.Bot, updat
 		return
 	}
 
-	bm.states.Set(tgId, &UserState{
-		Step:       StepEnterExerciseName,
-		CategoryID: categoryID,
-	})
-
-	bm.sendForceReply(ctx, b, tgId, "Введите название упражнения:")
+	botMsgID := int(update.CallbackQuery.Message.Message.ID)
+	state := &UserState{
+		Step:         StepEnterExerciseName,
+		CategoryID:   categoryID,
+		BotMessageID: botMsgID,
+	}
+	bm.states.Set(tgId, state)
+	state.PromptMessageID = bm.sendForceReply(ctx, b, tgId, "Введите название упражнения:")
+	bm.states.Set(tgId, state)
 }
 
 func (bm *Manager) selectExerciseTypeHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
@@ -1011,7 +1027,8 @@ func (bm *Manager) selectExerciseTypeHandler(ctx context.Context, b *bot.Bot, up
 		return
 	}
 	bm.states.Delete(tgId)
-	bm.sendSettingsMessage(ctx, b, tgId, "Упражнение создано!")
+	messageID := int(update.CallbackQuery.Message.Message.ID)
+	bm.sendSettingsMessage(ctx, b, tgId, "Упражнение создано!", messageID)
 }
 
 // --- helpers ---
@@ -1023,8 +1040,20 @@ func (bm *Manager) sendText(ctx context.Context, b *bot.Bot, chatID int64, text 
 	}
 }
 
-func (bm *Manager) sendForceReply(ctx context.Context, b *bot.Bot, chatID int64, text string) {
-	_, err := b.SendMessage(ctx, &bot.SendMessageParams{
+func (bm *Manager) deleteMessages(ctx context.Context, b *bot.Bot, chatID int64, messageIDs ...int) {
+	for _, id := range messageIDs {
+		if id == 0 {
+			continue
+		}
+		_, err := b.DeleteMessage(ctx, &bot.DeleteMessageParams{ChatID: chatID, MessageID: id})
+		if err != nil {
+			bm.Logger.Errorf("delete message %d failed: %v", id, err)
+		}
+	}
+}
+
+func (bm *Manager) sendForceReply(ctx context.Context, b *bot.Bot, chatID int64, text string) int {
+	msg, err := b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: chatID,
 		Text:   text,
 		ReplyMarkup: &models.ForceReply{
@@ -1034,10 +1063,12 @@ func (bm *Manager) sendForceReply(ctx context.Context, b *bot.Bot, chatID int64,
 	})
 	if err != nil {
 		bm.Logger.Errorf("send force reply failed: %v", err)
+		return 0
 	}
+	return msg.ID
 }
 
-func (bm *Manager) sendApproachListMessage(ctx context.Context, b *bot.Bot, chatID int64, tgId, exerciseId, trainingId int, dateStr string) {
+func (bm *Manager) sendApproachListMessage(ctx context.Context, b *bot.Bot, chatID int64, tgId, exerciseId, trainingId int, dateStr string, editMessageID int) {
 	list, err := bm.tm.ApproachList(ctx, tgId, trainingId, exerciseId)
 	if err != nil {
 		bm.Logger.Errorf("get approach list failed: %v", err)
@@ -1055,24 +1086,48 @@ func (bm *Manager) sendApproachListMessage(ctx context.Context, b *bot.Bot, chat
 	if exerciseName == "" {
 		text = fmt.Sprintf("Подходы (%v)", d.Format("02/01/2006"))
 	}
-	_, err = b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID:      chatID,
-		Text:        text,
-		ParseMode:   models.ParseModeHTML,
-		ReplyMarkup: &markup,
-	})
+	if editMessageID != 0 {
+		_, err = b.EditMessageText(ctx, &bot.EditMessageTextParams{
+			MessageID:   editMessageID,
+			ChatID:      chatID,
+			Text:        text,
+			ParseMode:   models.ParseModeHTML,
+			ReplyMarkup: &markup,
+		})
+	} else {
+		_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID:      chatID,
+			Text:        text,
+			ParseMode:   models.ParseModeHTML,
+			ReplyMarkup: &markup,
+		})
+	}
 	if err != nil {
 		bm.Logger.Errorf("send approach list failed: %v", err)
 	}
 }
 
-func (bm *Manager) sendSettingsMessage(ctx context.Context, b *bot.Bot, chatID int64, prefix string) {
+func (bm *Manager) sendSettingsMessage(ctx context.Context, b *bot.Bot, chatID int64, prefix string, editMessageID int) {
 	markup := settingsMarkup()
-	_, err := b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID:      chatID,
-		Text:        prefix + "\n\n⚙️ Настройки",
-		ReplyMarkup: &markup,
-	})
+	text := prefix + "\n\n⚙️ Настройки"
+	if prefix == "" {
+		text = "⚙️ Настройки"
+	}
+	var err error
+	if editMessageID != 0 {
+		_, err = b.EditMessageText(ctx, &bot.EditMessageTextParams{
+			MessageID:   editMessageID,
+			ChatID:      chatID,
+			Text:        text,
+			ReplyMarkup: &markup,
+		})
+	} else {
+		_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID:      chatID,
+			Text:        text,
+			ReplyMarkup: &markup,
+		})
+	}
 	if err != nil {
 		bm.Logger.Errorf("send settings failed: %v", err)
 	}
