@@ -81,6 +81,7 @@ func (bm *Manager) RegisterBotHandlers(b *bot.Bot) {
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, NewApproachCallback, bot.MatchTypePrefix, bm.newApproach)
 
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, SelectCategoryCallback, bot.MatchTypePrefix, bm.selectCategory)
+	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, SelectExerciseCategoryCallback, bot.MatchTypePrefix, bm.selectExerciseCategory)
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, SelectExerciseCallback, bot.MatchTypePrefix, bm.selectExercise)
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, EditApproachCallback, bot.MatchTypePrefix, bm.editApproach)
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, DeleteApproachCallback, bot.MatchTypePrefix, bm.deleteApproach)
@@ -91,7 +92,6 @@ func (bm *Manager) RegisterBotHandlers(b *bot.Bot) {
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, AddCategoryCallback, bot.MatchTypePrefix, bm.addCategoryHandler)
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, AddExerciseCallback, bot.MatchTypePrefix, bm.addExerciseHandler)
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, SelectParentCategoryCallback, bot.MatchTypePrefix, bm.selectParentCategory)
-	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, SelectExerciseCategoryCallback, bot.MatchTypePrefix, bm.selectExerciseCategory)
 }
 
 func (bm *Manager) DefaultHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
@@ -455,10 +455,9 @@ func (bm *Manager) newExercise(ctx context.Context, b *bot.Bot, update *models.U
 	}
 
 	bm.states.Set(tgId, &UserState{
-		Step:            StepSelectCategory,
-		TrainingID:      trainingId,
-		Date:            dateStr,
-		AddExerciseOnly: true,
+		Step:       StepSelectCategory,
+		TrainingID: trainingId,
+		Date:       dateStr,
 	})
 
 	backCallback := fmt.Sprintf("%v_%v_%v", ExerciseListCallback, dateStr, trainingId)
@@ -589,7 +588,7 @@ func (bm *Manager) selectCategory(ctx context.Context, b *bot.Bot, update *model
 
 	if len(subs) > 0 {
 		var backCallback string
-		if state != nil && state.AddExerciseOnly {
+		if state != nil {
 			backCallback = fmt.Sprintf("%v_%v_%v", ExerciseListCallback, dateStr, trainingId)
 		} else {
 			backCallback = fmt.Sprintf("%v_%v_%v_%v", ApproachListCallback, 0, dateStr, trainingId)
@@ -615,7 +614,7 @@ func (bm *Manager) selectCategory(ctx context.Context, b *bot.Bot, update *model
 	}
 
 	var backCallback string
-	if state != nil && state.AddExerciseOnly {
+	if state != nil {
 		backCallback = fmt.Sprintf("%v_%v_%v", ExerciseListCallback, dateStr, trainingId)
 	} else {
 		backCallback = fmt.Sprintf("%v_%v_%v_%v", ApproachListCallback, 0, dateStr, trainingId)
@@ -653,32 +652,6 @@ func (bm *Manager) selectExercise(ctx context.Context, b *bot.Bot, update *model
 		return
 	}
 
-	state := bm.states.Get(tgId)
-
-	if state != nil && state.AddExerciseOnly {
-		// User was adding an exercise to the training — go back to exercise list.
-		bm.states.Delete(tgId)
-		exercises, err := bm.tm.ExerciseList(ctx, int(tgId), trainingId)
-		if err != nil {
-			bm.Logger.Errorf("get exercise list failed: %v", err)
-			return
-		}
-		d, _ := time.Parse("2006-01-02", dateStr)
-		markup := exerciseListMarkup(exercises, dateStr, trainingId)
-		messageID := update.CallbackQuery.Message.Message.ID
-		_, err = b.EditMessageText(ctx, &bot.EditMessageTextParams{
-			MessageID:   messageID,
-			ChatID:      tgId,
-			Text:        fmt.Sprintf("Упражнения %v", d.Format("02/01/2006")),
-			ReplyMarkup: &markup,
-		})
-		if err != nil {
-			bm.Logger.Errorf("send exercise list failed: %v", err)
-		}
-		return
-	}
-
-	// Normal flow: go directly to approach list for this exercise (empty, ready to add)
 	bm.states.Delete(tgId)
 	exercises, err := bm.tm.ApproachList(ctx, int(tgId), trainingId, exerciseID)
 	if err != nil {

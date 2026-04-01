@@ -103,6 +103,10 @@ func (tm TrainingManager) ApproachList(ctx context.Context, tgId, trainingId, ex
 		return nil, err
 	}
 
+	if len(training.ApproachIDs) == 0 {
+		return nil, nil
+	}
+
 	approaches, err := tm.tr.ApproachesByFilters(ctx,
 		&db.ApproachSearch{
 			IDs:        training.ApproachIDs,
@@ -265,14 +269,19 @@ func (tm TrainingManager) DeleteTraining(ctx context.Context, tgId, trainingId i
 		return errors.New("training not found")
 	}
 
-	training.StatusID = db.StatusDeleted
-	updated, err := tm.tr.UpdateTraining(ctx, training, db.WithColumns(db.Columns.Training.StatusID))
-	if err != nil {
-		return err
-	} else if !updated {
-		return errors.New("delete training failed")
-	}
-	return nil
+	return tm.dbo.RunInLock(ctx, fmt.Sprintf("delete-training-%d", trainingId), func(tx *pg.Tx) error {
+		tr := tm.tr.WithTransaction(tx)
+
+		training.StatusID = db.StatusDeleted
+		updated, err := tr.UpdateTraining(ctx, training, db.WithColumns(db.Columns.Training.StatusID))
+		if err != nil {
+			return err
+		} else if !updated {
+			return errors.New("delete training failed")
+		}
+
+		return tr.DeleteApproachesByIDs(ctx, training.ApproachIDs)
+	})
 }
 
 func (tm TrainingManager) NewApproach(ctx context.Context, tgId, trainingId int) error {

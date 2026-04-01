@@ -18,15 +18,14 @@ const (
 )
 
 type UserState struct {
-	Step            Step
-	TrainingID      int
-	Date            string
-	CategoryID      int
-	ExerciseID      int
-	ApproachID      int
-	Reps            int
-	AddExerciseOnly bool // true when adding exercise to training (skip reps/weight)
-	ExpiresAt       time.Time
+	Step       Step
+	TrainingID int
+	Date       string
+	CategoryID int
+	ExerciseID int
+	ApproachID int
+	Reps       int
+	ExpiresAt  time.Time
 }
 
 type StateStore struct {
