@@ -3,45 +3,183 @@ package bot
 import (
 	"fmt"
 	"github.com/go-telegram/bot/models"
-	"workoutbot/pkg/workout"
+	"strconv"
+	"workout/pkg/db"
+	"workout/pkg/workout"
 )
 
-func createStartMarkup() models.InlineKeyboardMarkup {
-	var buttonsRow []models.InlineKeyboardButton
+func startMarkup() models.InlineKeyboardMarkup {
+	return models.InlineKeyboardMarkup{InlineKeyboard: [][]models.InlineKeyboardButton{
+		{{Text: "Мои тренировки", CallbackData: MyTrainingsCallback}},
+		{{Text: "Статистика", CallbackData: StatisticsCallback}},
+		{{Text: "Настройки", CallbackData: SettingsCallback}},
+	}}
+}
+
+func trainingListMarkup(trainings workout.Trainings, date string) models.InlineKeyboardMarkup {
 	var allButtons [][]models.InlineKeyboardButton
 
-	buttonsRow = append(buttonsRow, models.InlineKeyboardButton{Text: "Мои тренировки", CallbackData: MyTrainingsCallback})
-	allButtons = append(allButtons, buttonsRow)
+	for i := range trainings {
+		trainingId := trainings[i].ID
+		allButtons = append(allButtons, []models.InlineKeyboardButton{
+			{
+				Text:         fmt.Sprintf("Тренировка №%d", i+1),
+				CallbackData: fmt.Sprintf("%v_%v_%v", ExerciseListCallback, date, trainingId),
+			},
+			{
+				Text:         "🗑",
+				CallbackData: fmt.Sprintf("%v_%v_%v", DeleteTrainingCallback, date, trainingId),
+			},
+		})
+	}
 
-	buttonsRow = []models.InlineKeyboardButton{}
-	buttonsRow = append(buttonsRow, models.InlineKeyboardButton{Text: "Статистика", URL: "https://market.yandex.ru/business--metr-v-kube/3697903"})
-	allButtons = append(allButtons, buttonsRow)
-
-	buttonsRow = []models.InlineKeyboardButton{}
-	buttonsRow = append(buttonsRow, models.InlineKeyboardButton{Text: "Настройки", URL: "https://www.ozon.ru/seller/metr-v-kube-259267"})
-	allButtons = append(allButtons, buttonsRow)
+	allButtons = append(allButtons,
+		[]models.InlineKeyboardButton{
+			{Text: "Новая тренировка", CallbackData: fmt.Sprintf("%v_%v", NewTrainingCallback, date)},
+		},
+		[]models.InlineKeyboardButton{
+			{Text: "Назад", CallbackData: MyTrainingsCallback},
+		},
+	)
 
 	return models.InlineKeyboardMarkup{InlineKeyboard: allButtons}
 }
 
-func createTrainingListMarkup(trainings workout.Trainings) models.InlineKeyboardMarkup {
-	var buttonsRow []models.InlineKeyboardButton
+// exerciseListMarkup shows unique exercises in a training.
+// format: exerciseList_date_TID
+func exerciseListMarkup(exercises []db.Exercise, date string, trainingId int) models.InlineKeyboardMarkup {
 	var allButtons [][]models.InlineKeyboardButton
 
-	for i := range trainings {
-		buttonsRow = []models.InlineKeyboardButton{}
-		buttonsRow = append(buttonsRow, models.InlineKeyboardButton{Text: fmt.Sprintf("Тренировка №%d", i), URL: "https://market.yandex.ru/business--metr-v-kube/3697903"})
-		allButtons = append(allButtons, buttonsRow)
-
+	for _, e := range exercises {
+		allButtons = append(allButtons, []models.InlineKeyboardButton{
+			{
+				Text:         e.Title,
+				CallbackData: fmt.Sprintf("%v_%v_%v_%v", ApproachListCallback, e.ID, date, trainingId),
+			},
+		})
 	}
 
-	buttonsRow = []models.InlineKeyboardButton{}
-	buttonsRow = append(buttonsRow, models.InlineKeyboardButton{Text: "Новая тренировка", URL: "https://www.ozon.ru/seller/metr-v-kube-259267"})
-	allButtons = append(allButtons, buttonsRow)
+	allButtons = append(allButtons,
+		[]models.InlineKeyboardButton{
+			{Text: "+ Добавить упражнение", CallbackData: fmt.Sprintf("%v_%v_%v", NewExerciseCallback, date, trainingId)},
+		},
+		[]models.InlineKeyboardButton{
+			{Text: "Назад", CallbackData: fmt.Sprintf("%v_%v", TrainingListCallback, date)},
+		},
+	)
 
-	buttonsRow = []models.InlineKeyboardButton{}
-	buttonsRow = append(buttonsRow, models.InlineKeyboardButton{Text: "Назад", CallbackData: MyTrainingsCallback})
-	allButtons = append(allButtons, buttonsRow)
+	return models.InlineKeyboardMarkup{InlineKeyboard: allButtons}
+}
 
+// approachListMarkup shows approaches for a specific exercise.
+// format: approachList_EID_date_TID
+func approachListMarkup(approaches workout.Approaches, exerciseId, trainingId int, date string) models.InlineKeyboardMarkup {
+	var allButtons [][]models.InlineKeyboardButton
+
+	for i := range approaches {
+		a := approaches[i]
+		reps := strconv.Itoa(workout.Deref(a.Reps, 0))
+		weight := strconv.Itoa(workout.Deref(a.Weight, 0))
+
+		allButtons = append(allButtons,
+			[]models.InlineKeyboardButton{
+				{Text: fmt.Sprintf("%d. %s пов × %s кг", i+1, reps, weight), CallbackData: "ignore"},
+			},
+			[]models.InlineKeyboardButton{
+				{
+					Text:         "✏️ Изменить",
+					CallbackData: fmt.Sprintf("%v_%v_%v_%v_%v", EditApproachCallback, a.ID, exerciseId, date, trainingId),
+				},
+				{
+					Text:         "🗑 Удалить",
+					CallbackData: fmt.Sprintf("%v_%v_%v_%v_%v", DeleteApproachCallback, a.ID, exerciseId, date, trainingId),
+				},
+			},
+		)
+	}
+
+	allButtons = append(allButtons,
+		[]models.InlineKeyboardButton{
+			{
+				Text:         "+ Новый подход",
+				CallbackData: fmt.Sprintf("%v_%v_%v_%v", NewApproachCallback, exerciseId, date, trainingId),
+			},
+		},
+		[]models.InlineKeyboardButton{
+			{Text: "Назад", CallbackData: fmt.Sprintf("%v_%v_%v", ExerciseListCallback, date, trainingId)},
+		},
+	)
+
+	return models.InlineKeyboardMarkup{InlineKeyboard: allButtons}
+}
+
+// categoryMarkup shows a list of categories. backCallback is the "Назад" button target.
+func categoryMarkup(categories []db.Category, date string, trainingId int, backCallback string) models.InlineKeyboardMarkup {
+	var allButtons [][]models.InlineKeyboardButton
+	for _, c := range categories {
+		allButtons = append(allButtons, []models.InlineKeyboardButton{
+			{
+				Text:         c.Title,
+				CallbackData: fmt.Sprintf("%v_%v_%v_%v", SelectCategoryCallback, c.ID, date, trainingId),
+			},
+		})
+	}
+	allButtons = append(allButtons, []models.InlineKeyboardButton{
+		{Text: "Назад", CallbackData: backCallback},
+	})
+	return models.InlineKeyboardMarkup{InlineKeyboard: allButtons}
+}
+
+// exerciseMarkup shows a list of exercises. backCallback is the "Назад" button target.
+func exerciseMarkup(exercises []db.Exercise, date string, trainingId int, backCallback string) models.InlineKeyboardMarkup {
+	var allButtons [][]models.InlineKeyboardButton
+	for _, e := range exercises {
+		allButtons = append(allButtons, []models.InlineKeyboardButton{
+			{
+				Text:         e.Title,
+				CallbackData: fmt.Sprintf("%v_%v_%v_%v", SelectExerciseCallback, e.ID, date, trainingId),
+			},
+		})
+	}
+	allButtons = append(allButtons, []models.InlineKeyboardButton{
+		{Text: "Назад", CallbackData: backCallback},
+	})
+	return models.InlineKeyboardMarkup{InlineKeyboard: allButtons}
+}
+
+func settingsMarkup() models.InlineKeyboardMarkup {
+	return models.InlineKeyboardMarkup{InlineKeyboard: [][]models.InlineKeyboardButton{
+		{{Text: "Добавить категорию", CallbackData: AddCategoryCallback}},
+		{{Text: "Добавить упражнение", CallbackData: AddExerciseCallback}},
+		{{Text: "Назад", CallbackData: StartCallback}},
+	}}
+}
+
+func parentCategoryMarkup(categories []db.Category) models.InlineKeyboardMarkup {
+	var allButtons [][]models.InlineKeyboardButton
+	allButtons = append(allButtons, []models.InlineKeyboardButton{
+		{Text: "Без родителя", CallbackData: fmt.Sprintf("%v_0", SelectParentCategoryCallback)},
+	})
+	for _, c := range categories {
+		allButtons = append(allButtons, []models.InlineKeyboardButton{
+			{Text: c.Title, CallbackData: fmt.Sprintf("%v_%v", SelectParentCategoryCallback, c.ID)},
+		})
+	}
+	allButtons = append(allButtons, []models.InlineKeyboardButton{
+		{Text: "Назад", CallbackData: SettingsCallback},
+	})
+	return models.InlineKeyboardMarkup{InlineKeyboard: allButtons}
+}
+
+func exerciseCategoryMarkup(categories []db.Category) models.InlineKeyboardMarkup {
+	var allButtons [][]models.InlineKeyboardButton
+	for _, c := range categories {
+		allButtons = append(allButtons, []models.InlineKeyboardButton{
+			{Text: c.Title, CallbackData: fmt.Sprintf("%v_%v", SelectExerciseCategoryCallback, c.ID)},
+		})
+	}
+	allButtons = append(allButtons, []models.InlineKeyboardButton{
+		{Text: "Назад", CallbackData: SettingsCallback},
+	})
 	return models.InlineKeyboardMarkup{InlineKeyboard: allButtons}
 }

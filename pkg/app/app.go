@@ -5,9 +5,9 @@ import (
 	"net"
 	"time"
 
-	"workoutbot/pkg/bot"
-	"workoutbot/pkg/db"
-	"workoutbot/pkg/vt"
+	"workout/pkg/bot"
+	"workout/pkg/db"
+	"workout/pkg/vt"
 
 	"github.com/go-pg/pg/v10"
 	botlib "github.com/go-telegram/bot"

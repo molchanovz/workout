@@ -1,8 +1,22 @@
 package workout
 
 import (
-	"workoutbot/pkg/db"
+	"workout/pkg/db"
 )
+
+type Approach struct {
+	db.Approach
+}
+
+func NewApproach(in *db.Approach) *Approach {
+	if in == nil {
+		return nil
+	}
+
+	return &Approach{
+		Approach: *in,
+	}
+}
 
 type Training struct {
 	db.Training
@@ -20,22 +34,22 @@ func NewTraining(in *db.Training) *Training {
 	}
 }
 
-type BotUser struct {
-	db.BotUser
+type SiteUser struct {
+	db.SiteUser
 }
 
-func NewBotUser(in *db.BotUser) *BotUser {
+func NewSiteUser(in *db.SiteUser) *SiteUser {
 	if in == nil {
 		return nil
 	}
 
-	return &BotUser{
-		BotUser: *in,
+	return &SiteUser{
+		SiteUser: *in,
 	}
 }
 
-func (u BotUser) ToDB() db.BotUser {
-	return db.BotUser{
+func (u SiteUser) ToDB() db.SiteUser {
+	return db.SiteUser{
 		ID:             u.ID,
 		TgID:           u.TgID,
 		CreatedAt:      u.CreatedAt,

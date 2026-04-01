@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pgd version="1" pg-version="18" default-schema="public">
+  <project name="workoutbot">
+    <settings>
+      <naming convention="camelCase"></naming>
+      <defaults nullable="true" on-delete="restrict" on-update="restrict"></defaults>
+    </settings>
+  </project>
+  <roles></roles>
+  <tablespaces></tablespaces>
+  <extensions></extensions>
+  <sequences></sequences>
+  <schema name="public">
+    <table name="statuses">
+      <column name="statusId" type="integer" nullable="false">
+        <identity generated="by-default"></identity>
+      </column>
+      <column name="title" type="varchar" length="255" nullable="false"></column>
+      <column name="alias" type="varchar" length="64" nullable="false"></column>
+      <pk name="statuses_pkey">
+        <column name="statusId"></column>
+      </pk>
+      <unique name="statuses_alias_key">
+        <column name="alias"></column>
+      </unique>
+    </table>
+    <table name="users">
+      <column name="userId" type="integer" nullable="false">
+        <identity generated="by-default"></identity>
+      </column>
+      <column name="login" type="varchar" length="64" nullable="false"></column>
+      <column name="password" type="varchar" length="64" nullable="false"></column>
+      <column name="authKey" type="varchar" length="32"></column>
+      <column name="createdAt" type="timestamptz" nullable="false" default="now()"></column>
+      <column name="lastActivityAt" type="timestamptz"></column>
+      <column name="statusId" type="integer" nullable="false"></column>
+      <pk name="users_pkey">
+        <column name="userId"></column>
+      </pk>
+      <fk name="FK_users_statusId" to-table="statuses" on-delete="no action" on-update="no action">
+        <column name="statusId" references="statusId"></column>
+      </fk>
+    </table>
+    <table name="vfsFiles">
+      <column name="fileId" type="integer" nullable="false">
+        <identity generated="by-default"></identity>
+      </column>
+      <column name="folderId" type="integer" nullable="false"></column>
+      <column name="title" type="varchar" length="255" nullable="false"></column>
+      <column name="path" type="varchar" length="255" nullable="false"></column>
+      <column name="params" type="text"></column>
+      <column name="isFavorite" type="boolean" default="false"></column>
+      <column name="mimeType" type="varchar" length="255" nullable="false"></column>
+      <column name="fileSize" type="integer" default="0"></column>
+      <column name="fileExists" type="boolean" nullable="false" default="true"></column>
+      <column name="createdAt" type="timestamp" nullable="false" default="now()"></column>
+      <column name="statusId" type="integer" nullable="false"></column>
+      <pk name="vfsFiles_pkey">
+        <column name="fileId"></column>
+      </pk>
+      <fk name="vfsFiles_folderId_fkey" to-table="vfsFolders" on-delete="no action" on-update="no action">
+        <column name="folderId" references="folderId"></column>
+      </fk>
+      <fk name="vfsFiles_statusId_fkey" to-table="statuses" on-delete="no action" on-update="no action">
+        <column name="statusId" references="statusId"></column>
+      </fk>
+    </table>
+    <table name="vfsFolders">
+      <column name="folderId" type="integer" nullable="false">
+        <identity generated="by-default"></identity>
+      </column>
+      <column name="parentFolderId" type="integer"></column>
+      <column name="title" type="varchar" length="255" nullable="false"></column>
+      <column name="isFavorite" type="boolean" default="false"></column>
+      <column name="createdAt" type="timestamp" nullable="false" default="now()"></column>
+      <column name="statusId" type="integer" nullable="false"></column>
+      <pk name="vfsFolders_pkey">
+        <column name="folderId"></column>
+      </pk>
+      <fk name="vfsFolders_parentFolderId_fkey" to-table="vfsFolders" on-delete="no action" on-update="no action">
+        <column name="parentFolderId" references="folderId"></column>
+      </fk>
+      <fk name="vfsFolders_statusId_fkey" to-table="statuses" on-delete="no action" on-update="no action">
+        <column name="statusId" references="statusId"></column>
+      </fk>
+    </table>
+    <table name="vfsHashes">
+      <column name="hash" type="varchar" length="40" nullable="false"></column>
+      <column name="namespace" type="varchar" length="32" nullable="false"></column>
+      <column name="extension" type="varchar" length="4" nullable="false"></column>
+      <column name="fileSize" type="integer" nullable="false" default="0"></column>
+      <column name="width" type="integer" nullable="false" default="0"></column>
+      <column name="height" type="integer" nullable="false" default="0"></column>
+      <column name="blurhash" type="text"></column>
+      <column name="error" type="text"></column>
+      <column name="createdAt" type="timestamptz" nullable="false" default="now()"></column>
+      <column name="indexedAt" type="timestamptz"></column>
+      <pk name="vfsHashes_pkey">
+        <column name="hash"></column>
+        <column name="namespace"></column>
+      </pk>
+    </table>
+    <table name="exercises">
+      <column name="exerciseId" type="integer" nullable="false">
+        <identity generated="by-default"></identity>
+      </column>
+      <column name="title" type="varchar" length="128" nullable="false"></column>
+      <column name="categoryId" type="integer" nullable="false"></column>
+      <column name="siteUserId" type="integer"></column>
+      <column name="statusId" type="integer" nullable="false"></column>
+      <pk name="pk_exercises">
+        <column name="exerciseId"></column>
+      </pk>
+      <fk name="Ref_exercises_to_statuses" to-table="statuses" on-delete="restrict" on-update="restrict">
+        <column name="statusId" references="statusId"></column>
+      </fk>
+      <fk name="Ref_exercises_to_categories" to-table="categories" on-delete="restrict" on-update="restrict">
+        <column name="categoryId" references="categoryId"></column>
+      </fk>
+      <fk name="Ref_exercises_to_siteUsers" to-table="siteUsers" on-delete="restrict" on-update="restrict">
+        <column name="siteUserId" references="siteUserId"></column>
+      </fk>
+    </table>
+    <table name="categories">
+      <column name="categoryId" type="integer" nullable="false">
+        <identity generated="by-default"></identity>
+      </column>
+      <column name="parentCategoryId" type="integer"></column>
+      <column name="title" type="varchar" length="128" nullable="false"></column>
+      <column name="siteUserId" type="integer"></column>
+      <column name="statusId" type="integer" nullable="false"></column>
+      <pk name="pk_categories">
+        <column name="categoryId"></column>
+      </pk>
+      <fk name="Ref_categories_to_statuses" to-table="statuses" on-delete="restrict" on-update="restrict">
+        <column name="statusId" references="statusId"></column>
+      </fk>
+      <fk name="Ref_categories_to_categories" to-table="categories" on-delete="restrict" on-update="restrict">
+        <column name="parentCategoryId" references="categoryId"></column>
+      </fk>
+      <fk name="Ref_categories_to_siteUsers" to-table="siteUsers" on-delete="restrict" on-update="restrict">
+        <column name="siteUserId" references="siteUserId"></column>
+      </fk>
+    </table>
+    <table name="approaches">
+      <column name="approachId" type="integer" nullable="false">
+        <identity generated="by-default"></identity>
+      </column>
+      <column name="exerciseId" type="integer"></column>
+      <column name="reps" type="integer"></column>
+      <column name="weight" type="integer"></column>
+      <column name="createdAt" type="timestamptz" default="now()"></column>
+      <column name="statusId" type="integer" nullable="false"></column>
+      <pk name="pk_approaches">
+        <column name="approachId"></column>
+      </pk>
+      <fk name="Ref_approaches_to_statuses" to-table="statuses" on-delete="restrict" on-update="restrict">
+        <column name="statusId" references="statusId"></column>
+      </fk>
+      <fk name="Ref_approaches_to_exercises" to-table="exercises" on-delete="restrict" on-update="restrict">
+        <column name="exerciseId" references="exerciseId"></column>
+      </fk>
+    </table>
+    <table name="trainings">
+      <column name="trainingId" type="integer" nullable="false">
+        <identity generated="by-default"></identity>
+      </column>
+      <column name="siteUserId" type="integer" nullable="false"></column>
+      <column name="approachIds" type="integer[]"></column>
+      <column name="startedAt" type="timestamptz" nullable="false" default="now()"></column>
+      <column name="endedAt" type="timestamptz"></column>
+      <column name="statusId" type="integer" nullable="false"></column>
+      <pk name="pk_trainings">
+        <column name="trainingId"></column>
+      </pk>
+      <fk name="Ref_trainings_to_statuses" to-table="statuses" on-delete="restrict" on-update="restrict">
+        <column name="statusId" references="statusId"></column>
+      </fk>
+      <fk name="Ref_trainings_to_siteUsers" to-table="siteUsers" on-delete="restrict" on-update="restrict">
+        <column name="siteUserId" references="siteUserId"></column>
+      </fk>
+    </table>
+    <table name="siteUsers">
+      <column name="siteUserId" type="integer" nullable="false">
+        <identity generated="by-default"></identity>
+      </column>
+      <column name="tgId" type="integer" nullable="false"></column>
+      <column name="createdAt" type="timestamptz" nullable="false" default="now()"></column>
+      <column name="lastActivityAt" type="timestamptz"></column>
+      <column name="statisticId" type="integer"></column>
+      <column name="statusId" type="integer" nullable="false"></column>
+      <pk name="pk_siteUsers">
+        <column name="siteUserId"></column>
+      </pk>
+      <fk name="Ref_botUsers_to_statuses" to-table="statuses" on-delete="restrict" on-update="restrict">
+        <column name="statusId" references="statusId"></column>
+      </fk>
+    </table>
+    <index name="IX_FK_users_statusId_users" table="users">
+      <column name="statusId"></column>
+    </index>
+    <index name="IX_FK_vfsFiles_folderId_vfsFiles" table="vfsFiles">
+      <column name="folderId"></column>
+    </index>
+    <index name="IX_FK_vfsFiles_statusId_vfsFiles" table="vfsFiles">
+      <column name="statusId"></column>
+    </index>
+    <index name="IX_FK_vfsFolders_folderId_vfsFolders" table="vfsFolders">
+      <column name="parentFolderId"></column>
+    </index>
+    <index name="IX_FK_vfsFolders_statusId_vfsFolders" table="vfsFolders">
+      <column name="statusId"></column>
+    </index>
+    <index name="vfsHashes_pkey" table="vfsHashes" unique="true">
+      <column name="hash"></column>
+      <column name="namespace"></column>
+    </index>
+    <index name="IX_vfsHashes_indexedAt" table="vfsHashes">
+      <column name="indexedAt"></column>
+    </index>
+  </schema>
+  <functions></functions>
+  <triggers></triggers>
+  <rules></rules>
+  <policies></policies>
+  <comments></comments>
+  <layouts>
+    <layout name="Default Diagram" default="true">
+      <entity schema="public" table="statuses" x="580" y="420"></entity>
+      <entity schema="public" table="users" x="720" y="40"></entity>
+      <entity schema="public" table="vfsFiles" x="1140" y="320"></entity>
+      <entity schema="public" table="vfsFolders" x="1120" y="80"></entity>
+      <entity schema="public" table="vfsHashes" x="1020" y="640"></entity>
+      <entity schema="public" table="exercises" x="100" y="380"></entity>
+      <entity schema="public" table="categories" x="40" y="160"></entity>
+      <entity schema="public" table="approaches" x="540" y="620"></entity>
+      <entity schema="public" table="trainings" x="80" y="560"></entity>
+      <entity schema="public" table="siteUsers" x="380" y="-60"></entity>
+    </layout>
+  </layouts>
+</pgd>

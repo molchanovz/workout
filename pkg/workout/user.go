@@ -4,25 +4,25 @@ import (
 	"context"
 	"github.com/vmkteam/embedlog"
 	"time"
-	"workoutbot/pkg/db"
+	"workout/pkg/db"
 )
 
-type BotUserManager struct {
+type SiteUserManager struct {
 	embedlog.Logger
 	dbo      db.DB
 	userRepo db.UserRepo
 }
 
-func NewBotUserManager(dbo db.DB, log embedlog.Logger) *BotUserManager {
-	return &BotUserManager{
+func NewSiteUserManager(dbo db.DB, log embedlog.Logger) *SiteUserManager {
+	return &SiteUserManager{
 		Logger:   log,
 		dbo:      dbo,
 		userRepo: db.NewUserRepo(dbo.DB),
 	}
 }
 
-func (m BotUserManager) RegisterUser(ctx context.Context, tgId int) (bool, error) {
-	user, err := m.userRepo.OneBotUser(ctx, &db.BotUserSearch{TgID: &tgId})
+func (m SiteUserManager) RegisterUser(ctx context.Context, tgId int) (bool, error) {
+	user, err := m.userRepo.OneSiteUser(ctx, &db.SiteUserSearch{TgID: &tgId})
 	if err != nil {
 		return false, err
 	}
@@ -31,7 +31,7 @@ func (m BotUserManager) RegisterUser(ctx context.Context, tgId int) (bool, error
 		return false, nil
 	}
 
-	_, err = m.userRepo.AddBotUser(ctx, &db.BotUser{
+	_, err = m.userRepo.AddSiteUser(ctx, &db.SiteUser{
 		TgID:      tgId,
 		CreatedAt: time.Now(),
 		StatusID:  db.StatusEnabled,

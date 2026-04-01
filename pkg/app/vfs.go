@@ -3,8 +3,8 @@ package app
 import (
 	"net/http"
 
-	"workoutbot/pkg/db"
-	"workoutbot/pkg/vt"
+	"workout/pkg/db"
+	"workout/pkg/vt"
 
 	"github.com/labstack/echo/v4"
 	"github.com/vmkteam/embedlog"

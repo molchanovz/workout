@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"workoutbot/pkg/db"
+	"workout/pkg/db"
 
 	"github.com/vmkteam/embedlog"
 	"github.com/vmkteam/zenrpc/v2"

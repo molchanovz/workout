@@ -4,3 +4,6 @@ cfg/local.toml
 coverage.txt
 coverage.xml
 /vendor/
+CLAUDE.md
+/.claude/
+/plans/

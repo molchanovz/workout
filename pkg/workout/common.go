@@ -22,10 +22,10 @@ func Ptr[T any](in T) *T {
 	return &in
 }
 
-func Deref[T any](in *T) T {
-	if in != nil {
-		return *in
+func Deref[T any](v *T, def T) T {
+	if v == nil {
+		return def
 	}
 
-	return *new(T) // return default value for type
+	return *v
 }

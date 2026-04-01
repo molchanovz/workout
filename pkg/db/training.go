@@ -33,9 +33,9 @@ func NewTrainingRepo(db orm.DB) TrainingRepo {
 		},
 		join: map[string][]string{
 			Tables.Approach.Name: {TableColumns, Columns.Approach.Exercise},
-			Tables.Category.Name: {TableColumns, Columns.Category.ParentCategory, Columns.Category.BotUser},
-			Tables.Exercise.Name: {TableColumns, Columns.Exercise.Category, Columns.Exercise.BotUser},
-			Tables.Training.Name: {TableColumns, Columns.Training.BotUser},
+			Tables.Category.Name: {TableColumns, Columns.Category.ParentCategory, Columns.Category.SiteUser},
+			Tables.Exercise.Name: {TableColumns, Columns.Exercise.Category, Columns.Exercise.SiteUser},
+			Tables.Training.Name: {TableColumns, Columns.Training.SiteUser},
 		},
 	}
 }

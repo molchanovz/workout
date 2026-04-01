@@ -20,13 +20,13 @@ func NewUserRepo(db orm.DB) UserRepo {
 	return UserRepo{
 		db: db,
 		filters: map[string][]Filter{
-			Tables.BotUser.Name: {StatusFilter},
+			Tables.SiteUser.Name: {StatusFilter},
 		},
 		sort: map[string][]SortField{
-			Tables.BotUser.Name: {{Column: Columns.BotUser.CreatedAt, Direction: SortDesc}},
+			Tables.SiteUser.Name: {{Column: Columns.SiteUser.CreatedAt, Direction: SortDesc}},
 		},
 		join: map[string][]string{
-			Tables.BotUser.Name: {TableColumns},
+			Tables.SiteUser.Name: {TableColumns},
 		},
 	}
 }
@@ -50,27 +50,27 @@ func (ur UserRepo) WithEnabledOnly() UserRepo {
 	return ur
 }
 
-/*** BotUser ***/
+/*** SiteUser ***/
 
-// FullBotUser returns full joins with all columns
-func (ur UserRepo) FullBotUser() OpFunc {
-	return WithColumns(ur.join[Tables.BotUser.Name]...)
+// FullSiteUser returns full joins with all columns
+func (ur UserRepo) FullSiteUser() OpFunc {
+	return WithColumns(ur.join[Tables.SiteUser.Name]...)
 }
 
-// DefaultBotUserSort returns default sort.
-func (ur UserRepo) DefaultBotUserSort() OpFunc {
-	return WithSort(ur.sort[Tables.BotUser.Name]...)
+// DefaultSiteUserSort returns default sort.
+func (ur UserRepo) DefaultSiteUserSort() OpFunc {
+	return WithSort(ur.sort[Tables.SiteUser.Name]...)
 }
 
-// BotUserByID is a function that returns BotUser by ID(s) or nil.
-func (ur UserRepo) BotUserByID(ctx context.Context, id int, ops ...OpFunc) (*BotUser, error) {
-	return ur.OneBotUser(ctx, &BotUserSearch{ID: &id}, ops...)
+// SiteUserByID is a function that returns SiteUser by ID(s) or nil.
+func (ur UserRepo) SiteUserByID(ctx context.Context, id int, ops ...OpFunc) (*SiteUser, error) {
+	return ur.OneSiteUser(ctx, &SiteUserSearch{ID: &id}, ops...)
 }
 
-// OneBotUser is a function that returns one BotUser by filters. It could return pg.ErrMultiRows.
-func (ur UserRepo) OneBotUser(ctx context.Context, search *BotUserSearch, ops ...OpFunc) (*BotUser, error) {
-	obj := &BotUser{}
-	err := buildQuery(ctx, ur.db, obj, search, ur.filters[Tables.BotUser.Name], PagerTwo, ops...).Select()
+// OneSiteUser is a function that returns one SiteUser by filters. It could return pg.ErrMultiRows.
+func (ur UserRepo) OneSiteUser(ctx context.Context, search *SiteUserSearch, ops ...OpFunc) (*SiteUser, error) {
+	obj := &SiteUser{}
+	err := buildQuery(ctx, ur.db, obj, search, ur.filters[Tables.SiteUser.Name], PagerTwo, ops...).Select()
 
 	if errors.Is(err, pg.ErrMultiRows) {
 		return nil, err
@@ -81,34 +81,34 @@ func (ur UserRepo) OneBotUser(ctx context.Context, search *BotUserSearch, ops ..
 	return obj, err
 }
 
-// BotUsersByFilters returns BotUser list.
-func (ur UserRepo) BotUsersByFilters(ctx context.Context, search *BotUserSearch, pager Pager, ops ...OpFunc) (botUsers []BotUser, err error) {
-	err = buildQuery(ctx, ur.db, &botUsers, search, ur.filters[Tables.BotUser.Name], pager, ops...).Select()
+// SiteUsersByFilters returns SiteUser list.
+func (ur UserRepo) SiteUsersByFilters(ctx context.Context, search *SiteUserSearch, pager Pager, ops ...OpFunc) (siteUsers []SiteUser, err error) {
+	err = buildQuery(ctx, ur.db, &siteUsers, search, ur.filters[Tables.SiteUser.Name], pager, ops...).Select()
 	return
 }
 
-// CountBotUsers returns count
-func (ur UserRepo) CountBotUsers(ctx context.Context, search *BotUserSearch, ops ...OpFunc) (int, error) {
-	return buildQuery(ctx, ur.db, &BotUser{}, search, ur.filters[Tables.BotUser.Name], PagerOne, ops...).Count()
+// CountSiteUsers returns count
+func (ur UserRepo) CountSiteUsers(ctx context.Context, search *SiteUserSearch, ops ...OpFunc) (int, error) {
+	return buildQuery(ctx, ur.db, &SiteUser{}, search, ur.filters[Tables.SiteUser.Name], PagerOne, ops...).Count()
 }
 
-// AddBotUser adds BotUser to DB.
-func (ur UserRepo) AddBotUser(ctx context.Context, botUser *BotUser, ops ...OpFunc) (*BotUser, error) {
-	q := ur.db.ModelContext(ctx, botUser)
+// AddSiteUser adds SiteUser to DB.
+func (ur UserRepo) AddSiteUser(ctx context.Context, siteUser *SiteUser, ops ...OpFunc) (*SiteUser, error) {
+	q := ur.db.ModelContext(ctx, siteUser)
 	if len(ops) == 0 {
-		q = q.ExcludeColumn(Columns.BotUser.CreatedAt)
+		q = q.ExcludeColumn(Columns.SiteUser.CreatedAt)
 	}
 	applyOps(q, ops...)
 	_, err := q.Insert()
 
-	return botUser, err
+	return siteUser, err
 }
 
-// UpdateBotUser updates BotUser in DB.
-func (ur UserRepo) UpdateBotUser(ctx context.Context, botUser *BotUser, ops ...OpFunc) (bool, error) {
-	q := ur.db.ModelContext(ctx, botUser).WherePK()
+// UpdateSiteUser updates SiteUser in DB.
+func (ur UserRepo) UpdateSiteUser(ctx context.Context, siteUser *SiteUser, ops ...OpFunc) (bool, error) {
+	q := ur.db.ModelContext(ctx, siteUser).WherePK()
 	if len(ops) == 0 {
-		q = q.ExcludeColumn(Columns.BotUser.ID, Columns.BotUser.CreatedAt)
+		q = q.ExcludeColumn(Columns.SiteUser.ID, Columns.SiteUser.CreatedAt)
 	}
 	applyOps(q, ops...)
 	res, err := q.Update()
@@ -119,9 +119,9 @@ func (ur UserRepo) UpdateBotUser(ctx context.Context, botUser *BotUser, ops ...O
 	return res.RowsAffected() > 0, err
 }
 
-// DeleteBotUser set statusId to deleted in DB.
-func (ur UserRepo) DeleteBotUser(ctx context.Context, id int) (deleted bool, err error) {
-	botUser := &BotUser{ID: id, StatusID: StatusDeleted}
+// DeleteSiteUser set statusId to deleted in DB.
+func (ur UserRepo) DeleteSiteUser(ctx context.Context, id int) (deleted bool, err error) {
+	siteUser := &SiteUser{ID: id, StatusID: StatusDeleted}
 
-	return ur.UpdateBotUser(ctx, botUser, WithColumns(Columns.BotUser.StatusID))
+	return ur.UpdateSiteUser(ctx, siteUser, WithColumns(Columns.SiteUser.StatusID))
 }

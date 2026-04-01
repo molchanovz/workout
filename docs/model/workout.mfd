@@ -11,4 +11,10 @@
     </Languages>
     <GoPGVer>10</GoPGVer>
     <CustomTypes></CustomTypes>
+    <TableMapping>
+        <common>users</common>
+        <training>approaches,categories,exercises,trainings</training>
+        <user>siteUsers</user>
+        <vfs>vfsFiles,vfsFolders</vfs>
+    </TableMapping>
 </Project>

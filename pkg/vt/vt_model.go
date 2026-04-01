@@ -4,7 +4,7 @@ package vt
 import (
 	"time"
 
-	"workoutbot/pkg/db"
+	"workout/pkg/db"
 )
 
 type User struct {

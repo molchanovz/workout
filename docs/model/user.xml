@@ -1,11 +1,11 @@
 <Package xmlns:xsi="" xmlns:xsd="">
     <Name>user</Name>
     <Entities>
-        <Entity Name="BotUser" Namespace="user" Table="botUsers">
+        <Entity Name="SiteUser" Namespace="user" Table="siteUsers">
             <Attributes>
-                <Attribute Name="ID" DBName="botUserId" DBType="int4" GoType="int" PK="true" Nullable="Yes" Addable="true" Updatable="false" Min="0" Max="0"></Attribute>
+                <Attribute Name="ID" DBName="siteUserId" DBType="int4" GoType="int" PK="true" Nullable="Yes" Addable="true" Updatable="false" Min="0" Max="0" HasDefault="true"></Attribute>
                 <Attribute Name="TgID" DBName="tgId" DBType="int4" GoType="int" PK="false" Nullable="No" Addable="true" Updatable="true" Min="0" Max="0"></Attribute>
-                <Attribute Name="CreatedAt" DBName="createdAt" DBType="timestamptz" GoType="time.Time" PK="false" Nullable="No" Addable="false" Updatable="false" Min="0" Max="0"></Attribute>
+                <Attribute Name="CreatedAt" DBName="createdAt" DBType="timestamptz" GoType="time.Time" PK="false" Nullable="No" Addable="false" Updatable="false" Min="0" Max="0" HasDefault="true"></Attribute>
                 <Attribute Name="LastActivityAt" DBName="lastActivityAt" DBType="timestamptz" GoType="*time.Time" PK="false" Nullable="Yes" Addable="true" Updatable="true" Min="0" Max="0"></Attribute>
                 <Attribute Name="StatisticID" DBName="statisticId" DBType="int4" GoType="*int" PK="false" Nullable="Yes" Addable="true" Updatable="true" Min="0" Max="0"></Attribute>
                 <Attribute Name="StatusID" DBName="statusId" DBType="int4" GoType="int" PK="false" Nullable="No" Addable="true" Updatable="true" Min="0" Max="0"></Attribute>

@@ -2,12 +2,12 @@
 package workout
 
 import (
-	"workoutbot/pkg/db"
+	"workout/pkg/db"
 )
 
-type BotUsers []BotUser
+type Approaches []Approach
 
-func (ll BotUsers) IDs() []int {
+func (ll Approaches) IDs() []int {
 	r := make([]int, len(ll))
 	for i := range ll {
 		r[i] = ll[i].ID
@@ -15,15 +15,35 @@ func (ll BotUsers) IDs() []int {
 	return r
 }
 
-func (ll BotUsers) Index() map[int]BotUser {
-	r := make(map[int]BotUser, len(ll))
+func (ll Approaches) Index() map[int]Approach {
+	r := make(map[int]Approach, len(ll))
 	for i := range ll {
 		r[ll[i].ID] = ll[i]
 	}
 	return r
 }
 
-func NewBotUsers(in []db.BotUser) BotUsers { return MapP(in, NewBotUser) }
+func NewApproaches(in []db.Approach) Approaches { return MapP(in, NewApproach) }
+
+type SiteUsers []SiteUser
+
+func (ll SiteUsers) IDs() []int {
+	r := make([]int, len(ll))
+	for i := range ll {
+		r[i] = ll[i].ID
+	}
+	return r
+}
+
+func (ll SiteUsers) Index() map[int]SiteUser {
+	r := make(map[int]SiteUser, len(ll))
+	for i := range ll {
+		r[ll[i].ID] = ll[i]
+	}
+	return r
+}
+
+func NewSiteUsers(in []db.SiteUser) SiteUsers { return MapP(in, NewSiteUser) }
 
 type Trainings []Training
 

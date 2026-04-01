@@ -7,7 +7,7 @@ import (
 	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"workoutbot/pkg/db"
+	"workout/pkg/db"
 )
 
 func TestDB_AuthService(t *testing.T) {

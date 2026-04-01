@@ -4,7 +4,7 @@ package vt
 import (
 	"path"
 
-	"workoutbot/pkg/db"
+	"workout/pkg/db"
 )
 
 const (

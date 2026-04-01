@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"workoutbot/pkg/db"
+	"workout/pkg/db"
 
 	"github.com/go-pg/pg/v10"
 )

@@ -1,7 +1,7 @@
 package vt
 
 import (
-	"workoutbot/pkg/db"
+	"workout/pkg/db"
 )
 
 func NewUser(in *db.User) *User {

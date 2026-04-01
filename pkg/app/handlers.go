@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"workoutbot/pkg/rpc"
+	"workout/pkg/rpc"
 
 	sentryecho "github.com/getsentry/sentry-go/echo"
 	"github.com/labstack/echo/v4"

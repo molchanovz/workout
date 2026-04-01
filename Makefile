@@ -1,4 +1,4 @@
-NAME := workoutbot
+-include Makefile.mk
 
 GOFLAGS=-mod=vendor
 
@@ -8,9 +8,21 @@ ifeq ($(RACE),1)
 	GOFLAGS+=-race
 endif
 
-LINT_VERSION := v2.1.6
+LINT_VERSION := v2.4.0
 
 MAIN := ${NAME}/cmd/${NAME}
+
+export PGDATABASE
+export PGHOST
+export PGPORT
+export PGUSER
+export PGPASSWORD
+
+.PHONY: *
+
+init:
+	@cp -n Makefile.mk.dist Makefile.mk
+	@cp -n cfg/local.toml.dist cfg/local.toml
 
 tools:
 	@go install github.com/vmkteam/mfd-generator@latest
@@ -28,6 +40,7 @@ lint:
 
 build:
 	@CGO_ENABLED=0 go build $(GOFLAGS) -o ${NAME} $(MAIN)
+
 
 run:
 	@echo "Compiling"
@@ -50,21 +63,22 @@ mod:
 	@git add vendor
 
 db:
-	@dropdb --if-exists workout
-	@createdb workout
-	@psql -f docs/workout.sql workout
-	@psql -f docs/init.sql workout
+	@dropdb --if-exists -f $(PGDATABASE)
+	@createdb $(PGDATABASE)
+	@psql -f docs/$(NAME).sql $(PGDATABASE)
+	@psql -f docs/init.sql $(PGDATABASE)
+
+db-test:
+	@$(MAKE) --no-print-directory db PGDATABASE=${TEST_PGDATABASE}
 
 NS := "NONE"
 
-MAPPING := "common:users;vfs:vfsFiles,vfsFolders;user:botUsers;training:trainings,exercises,approaches,categories"
-
 mfd-xml:
-	@mfd-generator xml -c "postgres://postgres:postgres@localhost:5432/workout?sslmode=disable" -m ./docs/model/workout.mfd -n $(MAPPING)
+	@mfd-generator xml -c "postgres://$(PGUSER):$(PGPASSWORD)@$(PGHOST):$(PGPORT)/$(PGDATABASE)?sslmode=disable" -m ./docs/model/$(NAME).mfd
 mfd-model:
-	@mfd-generator model -m ./docs/model/workout.mfd -p db -o ./pkg/db
-mfd-repo: --check-ns
-	@mfd-generator repo -m ./docs/model/workout.mfd -p db -o ./pkg/db -n $(NS)
+	@mfd-generator model -m ./docs/model/$(NAME).mfd -p db -o ./pkg/db
+mfd-repo:
+	@mfd-generator repo -m ./docs/model/$(NAME).mfd -p db -o ./pkg/db
 mfd-vt-xml:
 	@mfd-generator xml-vt -m ./docs/model/workout.mfd
 mfd-vt-rpc: --check-ns

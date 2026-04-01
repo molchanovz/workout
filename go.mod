@@ -1,4 +1,4 @@
-module workoutbot
+module workout
 
 go 1.24.6
 

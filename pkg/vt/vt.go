@@ -1,7 +1,7 @@
 package vt
 
 import (
-	"workoutbot/pkg/db"
+	"workout/pkg/db"
 )
 
 const maxPageSize = 500

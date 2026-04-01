@@ -98,8 +98,11 @@ func (vr VfsRepo) CountVfsFiles(ctx context.Context, search *VfsFileSearch, ops 
 // AddVfsFile adds VfsFile to DB.
 func (vr VfsRepo) AddVfsFile(ctx context.Context, vfsFile *VfsFile, ops ...OpFunc) (*VfsFile, error) {
 	q := vr.db.ModelContext(ctx, vfsFile)
+	if len(ops) == 0 {
+		q = q.ExcludeColumn(Columns.VfsFile.CreatedAt)
+	}
 	applyOps(q, ops...)
-	_, err := q.ExcludeColumn(Columns.VfsFile.CreatedAt).Insert()
+	_, err := q.Insert()
 
 	return vfsFile, err
 }
@@ -107,8 +110,11 @@ func (vr VfsRepo) AddVfsFile(ctx context.Context, vfsFile *VfsFile, ops ...OpFun
 // UpdateVfsFile updates VfsFile in DB.
 func (vr VfsRepo) UpdateVfsFile(ctx context.Context, vfsFile *VfsFile, ops ...OpFunc) (bool, error) {
 	q := vr.db.ModelContext(ctx, vfsFile).WherePK()
+	if len(ops) == 0 {
+		q = q.ExcludeColumn(Columns.VfsFile.ID, Columns.VfsFile.CreatedAt)
+	}
 	applyOps(q, ops...)
-	res, err := q.ExcludeColumn(Columns.VfsFile.CreatedAt).Update()
+	res, err := q.Update()
 	if err != nil {
 		return false, err
 	}
@@ -168,8 +174,11 @@ func (vr VfsRepo) CountVfsFolders(ctx context.Context, search *VfsFolderSearch, 
 // AddVfsFolder adds VfsFolder to DB.
 func (vr VfsRepo) AddVfsFolder(ctx context.Context, vfsFolder *VfsFolder, ops ...OpFunc) (*VfsFolder, error) {
 	q := vr.db.ModelContext(ctx, vfsFolder)
+	if len(ops) == 0 {
+		q = q.ExcludeColumn(Columns.VfsFolder.CreatedAt)
+	}
 	applyOps(q, ops...)
-	_, err := q.ExcludeColumn(Columns.VfsFolder.CreatedAt).Insert()
+	_, err := q.Insert()
 
 	return vfsFolder, err
 }
@@ -177,8 +186,11 @@ func (vr VfsRepo) AddVfsFolder(ctx context.Context, vfsFolder *VfsFolder, ops ..
 // UpdateVfsFolder updates VfsFolder in DB.
 func (vr VfsRepo) UpdateVfsFolder(ctx context.Context, vfsFolder *VfsFolder, ops ...OpFunc) (bool, error) {
 	q := vr.db.ModelContext(ctx, vfsFolder).WherePK()
+	if len(ops) == 0 {
+		q = q.ExcludeColumn(Columns.VfsFolder.ID, Columns.VfsFolder.CreatedAt)
+	}
 	applyOps(q, ops...)
-	res, err := q.ExcludeColumn(Columns.VfsFolder.CreatedAt).Update()
+	res, err := q.Update()
 	if err != nil {
 		return false, err
 	}

@@ -10,8 +10,8 @@ import (
 	"syscall"
 	"time"
 
-	"workoutbot/pkg/app"
-	"workoutbot/pkg/db"
+	"workout/pkg/app"
+	"workout/pkg/db"
 
 	"github.com/BurntSushi/toml"
 	"github.com/getsentry/sentry-go"

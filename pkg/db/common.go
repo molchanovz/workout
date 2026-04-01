@@ -108,7 +108,7 @@ func (cr CommonRepo) AddUser(ctx context.Context, user *User, ops ...OpFunc) (*U
 func (cr CommonRepo) UpdateUser(ctx context.Context, user *User, ops ...OpFunc) (bool, error) {
 	q := cr.db.ModelContext(ctx, user).WherePK()
 	if len(ops) == 0 {
-		q = q.ExcludeColumn(Columns.User.CreatedAt)
+		q = q.ExcludeColumn(Columns.User.ID, Columns.User.CreatedAt)
 	}
 	applyOps(q, ops...)
 	res, err := q.Update()
