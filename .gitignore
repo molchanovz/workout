@@ -7,3 +7,4 @@ coverage.xml
 CLAUDE.md
 /.claude/
 /plans/
+.env

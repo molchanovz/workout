@@ -17,6 +17,6 @@ WORKDIR /app
 
 
 COPY --from=builder /app/main .
-COPY ./cfg/local.toml cfg/local.toml
+COPY cfg/local.toml cfg/local.toml
 
 CMD ["./main"]

@@ -24,7 +24,7 @@ const appName = "workoutbot"
 
 var (
 	fs                 = flag.NewFlagSetWithEnvPrefix(os.Args[0], "workoutbot", 0)
-	flConfigPath       = fs.String("config", "config.toml", "Path to config file")
+	flConfigPath       = fs.String("config", "./cfg/local.toml", "Path to config file")
 	flVerbose          = fs.Bool("verbose", false, "enable debug output")
 	flJSONLogs         = fs.Bool("json", false, "enable json output")
 	flDev              = fs.Bool("dev", false, "enable dev mode")
@@ -75,12 +75,6 @@ func main() {
 
 	// create & run app
 	a := app.New(appName, sl, cfg, dbc, pgdb)
-
-	// enable vfs
-	if cfg.Server.EnableVFS {
-		err = a.RegisterVFS(cfg.VFS, sl)
-		exitOnError(err)
-	}
 
 	// generate TS client from cmd flags
 	if *flGenerateTSClient {
