@@ -2,7 +2,10 @@ package app
 
 import (
 	"context"
+	"log"
 	"net"
+	"net/http"
+	"net/url"
 	"time"
 
 	"workout/pkg/bot"
@@ -68,6 +71,17 @@ func New(appName string, sl embedlog.Logger, cfg Config, db db.DB, dbc *pg.DB) *
 	a.bm = bot.NewManager(a.db, a.Logger)
 
 	opts := []botlib.Option{botlib.WithDefaultHandler(a.bm.DefaultHandler)}
+	if cfg.Bot.ProxyURL != "" {
+		proxyURL, err := url.Parse(cfg.Bot.ProxyURL)
+		if err != nil {
+			log.Printf("ошибка парсинга прокси: %v", err)
+		} else {
+			httpClient := &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyURL)}}
+			opts = append(opts, botlib.WithHTTPClient(60*time.Second, httpClient))
+			log.Printf("Используется прокси: %s", cfg.Bot.ProxyURL)
+		}
+	}
+
 	b, err := botlib.New(cfg.Bot.Token, opts...)
 	if err != nil {
 		panic(err)

@@ -44,7 +44,8 @@ const (
 )
 
 type Config struct {
-	Token string
+	Token    string
+	ProxyURL string
 }
 
 type Manager struct {
