@@ -23,7 +23,7 @@ services:
     depends_on:
       - db
     ports:
-      - "8075:8075"
+      - "8074:8075"
     env_file:
       - .env
 
