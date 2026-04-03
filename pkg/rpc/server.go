@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"net/http"
+	"workout/pkg/workout/training"
 
 	"workout/pkg/db"
 
@@ -21,10 +22,25 @@ var allowDebugFn = func() zm.AllowDebugFunc {
 	}
 }
 
+var namespaces = struct {
+	Auth     string
+	Training string
+}{
+	"auth",
+	"training",
+}
+
+type Options struct {
+	AppName         string
+	DB              db.DB
+	Logger          embedlog.Logger
+	TrainingManager *training.Manager
+}
+
 //go:generate zenrpc
 
 // New returns new zenrpc Server.
-func New(dbo db.DB, logger embedlog.Logger, isDevel bool) zenrpc.Server {
+func New(opt Options, isDevel bool) zenrpc.Server {
 	rpc := zenrpc.NewServer(zenrpc.Options{
 		ExposeSMD: true,
 		AllowCORS: true,
@@ -37,17 +53,17 @@ func New(dbo db.DB, logger embedlog.Logger, isDevel bool) zenrpc.Server {
 		zm.WithNoCancelContext(),
 		zm.WithMetrics(zm.DefaultServerName),
 		zm.WithTiming(isDevel, allowDebugFn()),
-		zm.WithSQLLogger(dbo.DB, isDevel, allowDebugFn(), allowDebugFn()),
+		zm.WithSQLLogger(opt.DB.DB, isDevel, allowDebugFn(), allowDebugFn()),
 	)
 
 	rpc.Use(
-		zm.WithSLog(logger.Print, zm.DefaultServerName, nil),
-		zm.WithErrorSLog(logger.Print, zm.DefaultServerName, nil),
+		zm.WithSLog(opt.Logger.Print, zm.DefaultServerName, nil),
+		zm.WithErrorSLog(opt.Logger.Print, zm.DefaultServerName, nil),
 	)
 
 	// services
 	rpc.RegisterAll(map[string]zenrpc.Invoker{
-		// "sample": NewSampleService(db, logger),
+		namespaces.Training: NewTrainingService(opt.Logger, opt.TrainingManager),
 	})
 
 	return rpc

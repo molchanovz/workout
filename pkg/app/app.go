@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+	"workout/pkg/workout/training"
 
 	"workout/pkg/bot"
 	"workout/pkg/db"
@@ -41,15 +42,16 @@ type Config struct {
 
 type App struct {
 	embedlog.Logger
-	appName string
-	cfg     Config
-	db      db.DB
-	dbc     *pg.DB
-	mon     *monitor.Monitor
-	echo    *echo.Echo
-	vtsrv   zenrpc.Server
-	b       *botlib.Bot
-	bm      *bot.Manager
+	appName         string
+	cfg             Config
+	db              db.DB
+	dbc             *pg.DB
+	mon             *monitor.Monitor
+	echo            *echo.Echo
+	vtsrv           zenrpc.Server
+	b               *botlib.Bot
+	bm              *bot.Manager
+	trainingManager *training.Manager
 }
 
 func New(appName string, sl embedlog.Logger, cfg Config, db db.DB, dbc *pg.DB) *App {

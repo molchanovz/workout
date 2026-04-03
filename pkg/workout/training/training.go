@@ -1,4 +1,4 @@
-package workout
+package training
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/vmkteam/embedlog"
 	"time"
 	"workout/pkg/db"
+	"workout/pkg/workout"
 )
 
 const (
@@ -15,15 +16,15 @@ const (
 	ExerciseTypeTimed    = 2
 )
 
-type TrainingManager struct {
+type Manager struct {
 	embedlog.Logger
 	dbo db.DB
 	tr  db.TrainingRepo
 	ur  db.UserRepo
 }
 
-func NewTrainingManager(dbo db.DB, log embedlog.Logger) *TrainingManager {
-	return &TrainingManager{
+func NewTrainingManager(dbo db.DB, log embedlog.Logger) *Manager {
+	return &Manager{
 		Logger: log,
 		dbo:    dbo,
 		tr:     db.NewTrainingRepo(dbo.DB),
@@ -32,7 +33,7 @@ func NewTrainingManager(dbo db.DB, log embedlog.Logger) *TrainingManager {
 }
 
 // TrainingList get trainings by date
-func (tm TrainingManager) TrainingList(ctx context.Context, tgId int, date *time.Time) (Trainings, error) {
+func (tm Manager) TrainingList(ctx context.Context, tgId int, date *time.Time) (workout.Trainings, error) {
 	user, err := tm.ur.OneSiteUser(ctx, &db.SiteUserSearch{TgID: &tgId})
 	if err != nil {
 		return nil, err
@@ -45,19 +46,19 @@ func (tm TrainingManager) TrainingList(ctx context.Context, tgId int, date *time
 
 	if date != nil {
 		startDate = date
-		endDate = Ptr(date.AddDate(0, 0, 1))
+		endDate = workout.Ptr(date.AddDate(0, 0, 1))
 	}
 
 	trainings, err := tm.tr.TrainingsByFilters(ctx,
-		&db.TrainingSearch{SiteUserID: &user.ID, StatusID: Ptr(db.StatusEnabled), StartedAtGrater: startDate, StartedAtLess: endDate},
+		&db.TrainingSearch{SiteUserID: &user.ID, StatusID: workout.Ptr(db.StatusEnabled), StartedAtGrater: startDate, StartedAtLess: endDate},
 		db.PagerNoLimit,
 	)
 
-	return NewTrainings(trainings), err
+	return workout.NewTrainings(trainings), err
 }
 
 // ExerciseList returns unique exercises present in a training, in order of first appearance.
-func (tm TrainingManager) ExerciseList(ctx context.Context, tgId, trainingId int) ([]db.Exercise, error) {
+func (tm Manager) ExerciseList(ctx context.Context, tgId, trainingId int) ([]db.Exercise, error) {
 	user, err := tm.ur.OneSiteUser(ctx, &db.SiteUserSearch{TgID: &tgId})
 	if err != nil {
 		return nil, err
@@ -73,7 +74,7 @@ func (tm TrainingManager) ExerciseList(ctx context.Context, tgId, trainingId int
 		return nil, nil
 	}
 
-	search := &db.ApproachSearch{IDs: training.ApproachIDs, StatusID: Ptr(db.StatusEnabled)}
+	search := &db.ApproachSearch{IDs: training.ApproachIDs, StatusID: workout.Ptr(db.StatusEnabled)}
 	search.With("t.\"exerciseId\" IS NOT NULL")
 
 	approaches, err := tm.tr.ApproachesByFilters(ctx, search, db.PagerNoLimit,
@@ -95,7 +96,7 @@ func (tm TrainingManager) ExerciseList(ctx context.Context, tgId, trainingId int
 }
 
 // ApproachList returns approaches for a specific exercise within a training.
-func (tm TrainingManager) ApproachList(ctx context.Context, tgId, trainingId, exerciseId int) (Approaches, error) {
+func (tm Manager) ApproachList(ctx context.Context, tgId, trainingId, exerciseId int) (workout.Approaches, error) {
 	user, err := tm.ur.OneSiteUser(ctx, &db.SiteUserSearch{TgID: &tgId})
 	if err != nil {
 		return nil, err
@@ -116,17 +117,17 @@ func (tm TrainingManager) ApproachList(ctx context.Context, tgId, trainingId, ex
 		&db.ApproachSearch{
 			IDs:        training.ApproachIDs,
 			ExerciseID: &exerciseId,
-			StatusID:   Ptr(db.StatusEnabled),
+			StatusID:   workout.Ptr(db.StatusEnabled),
 		},
 		db.PagerNoLimit,
 		db.WithRelations(db.Columns.Approach.Exercise),
 	)
 
-	return NewApproaches(approaches), err
+	return workout.NewApproaches(approaches), err
 }
 
 // NewTraining creates a new training session for the given date.
-func (tm TrainingManager) NewTraining(ctx context.Context, tgId int, date time.Time) (*Training, error) {
+func (tm Manager) NewTraining(ctx context.Context, tgId int, date time.Time) (*workout.Training, error) {
 	user, err := tm.ur.OneSiteUser(ctx, &db.SiteUserSearch{TgID: &tgId})
 	if err != nil {
 		return nil, err
@@ -142,11 +143,11 @@ func (tm TrainingManager) NewTraining(ctx context.Context, tgId int, date time.T
 	if err != nil {
 		return nil, err
 	}
-	return NewTraining(training), nil
+	return workout.NewTraining(training), nil
 }
 
 // AddApproach creates an approach with filled fields and appends it to the training.
-func (tm TrainingManager) AddApproach(ctx context.Context, tgId, trainingId, exerciseId, reps int, weight float64) error {
+func (tm Manager) AddApproach(ctx context.Context, tgId, trainingId, exerciseId, reps int, weight float64) error {
 	user, err := tm.ur.OneSiteUser(ctx, &db.SiteUserSearch{TgID: &tgId})
 	if err != nil {
 		return err
@@ -167,7 +168,7 @@ func (tm TrainingManager) AddApproach(ctx context.Context, tgId, trainingId, exe
 			ExerciseID: &exerciseId,
 			Reps:       &reps,
 			Weight:     &weightInt,
-			CreatedAt:  Ptr(time.Now()),
+			CreatedAt:  workout.Ptr(time.Now()),
 			StatusID:   db.StatusEnabled,
 		})
 		if err != nil {
@@ -186,7 +187,7 @@ func (tm TrainingManager) AddApproach(ctx context.Context, tgId, trainingId, exe
 }
 
 // UpdateApproach updates reps and weight of an existing approach.
-func (tm TrainingManager) UpdateApproach(ctx context.Context, tgId, approachId, reps int, weight float64) error {
+func (tm Manager) UpdateApproach(ctx context.Context, tgId, approachId, reps int, weight float64) error {
 	user, err := tm.ur.OneSiteUser(ctx, &db.SiteUserSearch{TgID: &tgId})
 	if err != nil {
 		return err
@@ -216,7 +217,7 @@ func (tm TrainingManager) UpdateApproach(ctx context.Context, tgId, approachId, 
 }
 
 // DeleteApproach soft-deletes an approach and removes it from the training's list.
-func (tm TrainingManager) DeleteApproach(ctx context.Context, tgId, trainingId, approachId int) error {
+func (tm Manager) DeleteApproach(ctx context.Context, tgId, trainingId, approachId int) error {
 	user, err := tm.ur.OneSiteUser(ctx, &db.SiteUserSearch{TgID: &tgId})
 	if err != nil {
 		return err
@@ -259,7 +260,7 @@ func (tm TrainingManager) DeleteApproach(ctx context.Context, tgId, trainingId, 
 }
 
 // DeleteTraining soft-deletes a training session.
-func (tm TrainingManager) DeleteTraining(ctx context.Context, tgId, trainingId int) error {
+func (tm Manager) DeleteTraining(ctx context.Context, tgId, trainingId int) error {
 	user, err := tm.ur.OneSiteUser(ctx, &db.SiteUserSearch{TgID: &tgId})
 	if err != nil {
 		return err
@@ -295,7 +296,7 @@ func (tm TrainingManager) DeleteTraining(ctx context.Context, tgId, trainingId i
 }
 
 // ExerciseType returns the TypeID of the given exercise.
-func (tm TrainingManager) ExerciseType(ctx context.Context, tgId, exerciseId int) (int, error) {
+func (tm Manager) ExerciseType(ctx context.Context, tgId, exerciseId int) (int, error) {
 	exercise, err := tm.tr.ExerciseByID(ctx, exerciseId)
 	if err != nil {
 		return ExerciseTypeStrength, err
@@ -306,7 +307,7 @@ func (tm TrainingManager) ExerciseType(ctx context.Context, tgId, exerciseId int
 }
 
 // AddTimedApproach creates an approach with Duration set and appends it to the training.
-func (tm TrainingManager) AddTimedApproach(ctx context.Context, tgId, trainingId, exerciseId, duration int) error {
+func (tm Manager) AddTimedApproach(ctx context.Context, tgId, trainingId, exerciseId, duration int) error {
 	user, err := tm.ur.OneSiteUser(ctx, &db.SiteUserSearch{TgID: &tgId})
 	if err != nil {
 		return err
@@ -325,7 +326,7 @@ func (tm TrainingManager) AddTimedApproach(ctx context.Context, tgId, trainingId
 		approach, err := trainingRepo.AddApproach(ctx, &db.Approach{
 			ExerciseID: &exerciseId,
 			Duration:   &duration,
-			CreatedAt:  Ptr(time.Now()),
+			CreatedAt:  workout.Ptr(time.Now()),
 			StatusID:   db.StatusEnabled,
 		})
 		if err != nil {
@@ -344,7 +345,7 @@ func (tm TrainingManager) AddTimedApproach(ctx context.Context, tgId, trainingId
 }
 
 // UpdateTimedApproach updates only Duration of an existing approach.
-func (tm TrainingManager) UpdateTimedApproach(ctx context.Context, tgId, approachId, duration int) error {
+func (tm Manager) UpdateTimedApproach(ctx context.Context, tgId, approachId, duration int) error {
 	user, err := tm.ur.OneSiteUser(ctx, &db.SiteUserSearch{TgID: &tgId})
 	if err != nil {
 		return err
@@ -371,7 +372,7 @@ func (tm TrainingManager) UpdateTimedApproach(ctx context.Context, tgId, approac
 	return nil
 }
 
-func (tm TrainingManager) NewApproach(ctx context.Context, tgId, trainingId int) error {
+func (tm Manager) NewApproach(ctx context.Context, tgId, trainingId int) error {
 	user, err := tm.ur.OneSiteUser(ctx, &db.SiteUserSearch{TgID: &tgId})
 	if err != nil {
 		return err
@@ -388,7 +389,7 @@ func (tm TrainingManager) NewApproach(ctx context.Context, tgId, trainingId int)
 		trainingRepo := tm.tr.WithTransaction(tx)
 
 		approach, err := trainingRepo.AddApproach(ctx, &db.Approach{
-			CreatedAt: Ptr(time.Now()),
+			CreatedAt: workout.Ptr(time.Now()),
 			StatusID:  db.StatusEnabled,
 		})
 		if err != nil {

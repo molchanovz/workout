@@ -126,11 +126,6 @@ CREATE INDEX "IX_FK_vfsFolders_statusId_vfsFolders" ON "vfsFolders" (
 	"statusId"
 );
 
-CREATE UNIQUE INDEX "vfsHashes_pkey" ON "vfsHashes" (
-	"hash",
-	"namespace"
-);
-
 CREATE INDEX "IX_vfsHashes_indexedAt" ON "vfsHashes" (
 	"indexedAt"
 );

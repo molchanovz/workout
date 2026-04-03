@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 	"workout/pkg/workout"
+	"workout/pkg/workout/training"
 
 	"workout/pkg/db"
 
@@ -51,7 +52,7 @@ type Config struct {
 type Manager struct {
 	embedlog.Logger
 	bum    *workout.SiteUserManager
-	tm     *workout.TrainingManager
+	tm     *training.Manager
 	cm     *workout.CategoryManager
 	sm     *workout.StatsManager
 	states *StateStore
@@ -61,7 +62,7 @@ func NewManager(dbo db.DB, logger embedlog.Logger) *Manager {
 	return &Manager{
 		Logger: logger,
 		bum:    workout.NewSiteUserManager(dbo, logger),
-		tm:     workout.NewTrainingManager(dbo, logger),
+		tm:     training.NewTrainingManager(dbo, logger),
 		cm:     workout.NewCategoryManager(dbo, logger),
 		sm:     workout.NewStatsManager(dbo, logger),
 		states: NewStateStore(),
@@ -593,7 +594,7 @@ func (bm *Manager) newApproach(ctx context.Context, b *bot.Bot, update *models.U
 		ExerciseType: exType,
 		BotMessageID: botMsgID,
 	}
-	if exType == workout.ExerciseTypeTimed {
+	if exType == training.ExerciseTypeTimed {
 		state.Step = StepEnterDuration
 		bm.states.Set(tgId, state)
 		state.PromptMessageID = bm.sendForceReply(ctx, b, tgId, "Введите время (секунды или MM:SS):")
@@ -757,7 +758,7 @@ func (bm *Manager) editApproach(ctx context.Context, b *bot.Bot, update *models.
 		ExerciseType: exType,
 		BotMessageID: botMsgID,
 	}
-	if exType == workout.ExerciseTypeTimed {
+	if exType == training.ExerciseTypeTimed {
 		state.Step = StepEnterDuration
 		bm.states.Set(tgId, state)
 		state.PromptMessageID = bm.sendForceReply(ctx, b, tgId, "Введите новое время (секунды или MM:SS):")

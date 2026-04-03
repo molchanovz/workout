@@ -77,7 +77,13 @@ func (a *App) registerDebugHandlers() {
 
 // registerAPIHandlers registers main rpc server.
 func (a *App) registerAPIHandlers() {
-	srv := rpc.New(a.db, a.Logger, a.cfg.Server.IsDevel)
+	opts := rpc.Options{
+		DB:              a.db,
+		Logger:          a.Logger,
+		TrainingManager: a.trainingManager,
+	}
+
+	srv := rpc.New(opts, a.cfg.Server.IsDevel)
 	gen := rpcgen.FromSMD(srv.SMD())
 
 	a.echo.Any("/v1/rpc/", zm.EchoHandler(zm.XRequestID(srv)))
