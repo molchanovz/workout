@@ -25,9 +25,11 @@ var allowDebugFn = func() zm.AllowDebugFunc {
 var namespaces = struct {
 	Auth     string
 	Training string
+	Exercise string
 }{
 	"auth",
 	"training",
+	"exercise",
 }
 
 type Options struct {
@@ -59,11 +61,13 @@ func New(opt Options, isDevel bool) zenrpc.Server {
 	rpc.Use(
 		zm.WithSLog(opt.Logger.Print, zm.DefaultServerName, nil),
 		zm.WithErrorSLog(opt.Logger.Print, zm.DefaultServerName, nil),
+		authMiddleware(db.NewUserRepo(opt.DB.DB)),
 	)
 
 	// services
 	rpc.RegisterAll(map[string]zenrpc.Invoker{
 		namespaces.Training: NewTrainingService(opt.Logger, opt.TrainingManager),
+		namespaces.Exercise: NewExerciseService(opt.Logger, opt.DB),
 	})
 
 	return rpc

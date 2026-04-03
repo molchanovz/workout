@@ -149,7 +149,7 @@ func (bm *Manager) textInputHandler(ctx context.Context, b *bot.Bot, update *mod
 		if state.ApproachID != 0 {
 			execErr = bm.tm.UpdateApproach(ctx, int(tgId), state.ApproachID, state.Reps, weight)
 		} else {
-			execErr = bm.tm.AddApproach(ctx, int(tgId), state.TrainingID, state.ExerciseID, state.Reps, weight)
+			_, execErr = bm.tm.AddApproach(ctx, int(tgId), state.TrainingID, state.ExerciseID, state.Reps, weight)
 		}
 		if execErr != nil {
 			bm.Logger.Errorf("save approach failed: %v", execErr)
@@ -208,7 +208,7 @@ func (bm *Manager) textInputHandler(ctx context.Context, b *bot.Bot, update *mod
 		if state.ApproachID != 0 {
 			execErr = bm.tm.UpdateTimedApproach(ctx, int(tgId), state.ApproachID, duration)
 		} else {
-			execErr = bm.tm.AddTimedApproach(ctx, int(tgId), state.TrainingID, state.ExerciseID, duration)
+			_, execErr = bm.tm.AddTimedApproach(ctx, int(tgId), state.TrainingID, state.ExerciseID, duration)
 		}
 		if execErr != nil {
 			bm.Logger.Errorf("save timed approach failed: %v", execErr)

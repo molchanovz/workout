@@ -103,6 +103,7 @@ CREATE TABLE "siteUsers" (
 	"lastActivityAt" timestamptz,
 	"statisticId" integer,
 	"statusId" integer NOT NULL,
+	"apiKey" text,
 	CONSTRAINT "pk_siteUsers" PRIMARY KEY("siteUserId")
 );
 

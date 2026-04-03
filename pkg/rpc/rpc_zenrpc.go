@@ -11,22 +11,1316 @@ import (
 )
 
 var RPC = struct {
-	TrainingService struct{ string }
+	ExerciseService struct{ CategoryList, List, AddCategory, Add string }
+	TrainingService struct{ List, Get, New, Delete, ExerciseList, ApproachList, AddApproach, AddTimedApproach, UpdateApproach, UpdateTimedApproach, DeleteApproach string }
 }{
-	TrainingService: struct{ string }{},
+	ExerciseService: struct{ CategoryList, List, AddCategory, Add string }{
+		CategoryList: "categorylist",
+		List:         "list",
+		AddCategory:  "addcategory",
+		Add:          "add",
+	},
+	TrainingService: struct{ List, Get, New, Delete, ExerciseList, ApproachList, AddApproach, AddTimedApproach, UpdateApproach, UpdateTimedApproach, DeleteApproach string }{
+		List:                "list",
+		Get:                 "get",
+		New:                 "new",
+		Delete:              "delete",
+		ExerciseList:        "exerciselist",
+		ApproachList:        "approachlist",
+		AddApproach:         "addapproach",
+		AddTimedApproach:    "addtimedapproach",
+		UpdateApproach:      "updateapproach",
+		UpdateTimedApproach: "updatetimedapproach",
+		DeleteApproach:      "deleteapproach",
+	},
+}
+
+func (ExerciseService) SMD() smd.ServiceInfo {
+	return smd.ServiceInfo{
+		Methods: map[string]smd.Service{
+			"CategoryList": {
+				Description: `CategoryList returns categories, optionally filtered by parent.`,
+				Parameters: []smd.JSONSchema{
+					{
+						Name:        "parentId",
+						Optional:    true,
+						Description: `Parent category ID (null for root categories)`,
+						Type:        smd.Integer,
+					},
+				},
+				Returns: smd.JSONSchema{
+					Description: `List of categories`,
+					Type:        smd.Array,
+					TypeName:    "[]DbCategory",
+					Items: map[string]string{
+						"$ref": "#/definitions/db.Category",
+					},
+					Definitions: map[string]smd.Definition{
+						"db.Category": {
+							Type: "object",
+							Properties: smd.PropertyList{
+								{
+									Name: "ID",
+									Type: smd.Integer,
+								},
+								{
+									Name:     "ParentCategoryID",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name: "Title",
+									Type: smd.String,
+								},
+								{
+									Name:     "SiteUserID",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name: "StatusID",
+									Type: smd.Integer,
+								},
+								{
+									Name:     "ParentCategory",
+									Optional: true,
+									Ref:      "#/definitions/db.Category",
+									Type:     smd.Object,
+								},
+								{
+									Name:     "SiteUser",
+									Optional: true,
+									Ref:      "#/definitions/db.SiteUser",
+									Type:     smd.Object,
+								},
+							},
+						},
+						"db.SiteUser": {
+							Type: "object",
+							Properties: smd.PropertyList{
+								{
+									Name: "ID",
+									Type: smd.Integer,
+								},
+								{
+									Name: "TgID",
+									Type: smd.Integer,
+								},
+								{
+									Name: "CreatedAt",
+									Type: smd.String,
+								},
+								{
+									Name:     "LastActivityAt",
+									Optional: true,
+									Type:     smd.String,
+								},
+								{
+									Name:     "StatisticID",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name: "StatusID",
+									Type: smd.Integer,
+								},
+								{
+									Name:     "ApiKey",
+									Optional: true,
+									Type:     smd.String,
+								},
+							},
+						},
+					},
+				},
+				Errors: map[int]string{
+					401: "Unauthorized",
+					500: "Internal Error",
+				},
+			},
+			"List": {
+				Description: `List returns exercises for a category (global + personal for the current user).`,
+				Parameters: []smd.JSONSchema{
+					{
+						Name:        "categoryId",
+						Description: `Category ID`,
+						Type:        smd.Integer,
+					},
+				},
+				Returns: smd.JSONSchema{
+					Description: `List of exercises`,
+					Type:        smd.Array,
+					TypeName:    "[]DbExercise",
+					Items: map[string]string{
+						"$ref": "#/definitions/db.Exercise",
+					},
+					Definitions: map[string]smd.Definition{
+						"db.Exercise": {
+							Type: "object",
+							Properties: smd.PropertyList{
+								{
+									Name: "ID",
+									Type: smd.Integer,
+								},
+								{
+									Name: "Title",
+									Type: smd.String,
+								},
+								{
+									Name: "CategoryID",
+									Type: smd.Integer,
+								},
+								{
+									Name:     "SiteUserID",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name: "TypeID",
+									Type: smd.Integer,
+								},
+								{
+									Name: "StatusID",
+									Type: smd.Integer,
+								},
+								{
+									Name:     "Category",
+									Optional: true,
+									Ref:      "#/definitions/db.Category",
+									Type:     smd.Object,
+								},
+								{
+									Name:     "SiteUser",
+									Optional: true,
+									Ref:      "#/definitions/db.SiteUser",
+									Type:     smd.Object,
+								},
+							},
+						},
+						"db.Category": {
+							Type: "object",
+							Properties: smd.PropertyList{
+								{
+									Name: "ID",
+									Type: smd.Integer,
+								},
+								{
+									Name:     "ParentCategoryID",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name: "Title",
+									Type: smd.String,
+								},
+								{
+									Name:     "SiteUserID",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name: "StatusID",
+									Type: smd.Integer,
+								},
+								{
+									Name:     "ParentCategory",
+									Optional: true,
+									Ref:      "#/definitions/db.Category",
+									Type:     smd.Object,
+								},
+								{
+									Name:     "SiteUser",
+									Optional: true,
+									Ref:      "#/definitions/db.SiteUser",
+									Type:     smd.Object,
+								},
+							},
+						},
+						"db.SiteUser": {
+							Type: "object",
+							Properties: smd.PropertyList{
+								{
+									Name: "ID",
+									Type: smd.Integer,
+								},
+								{
+									Name: "TgID",
+									Type: smd.Integer,
+								},
+								{
+									Name: "CreatedAt",
+									Type: smd.String,
+								},
+								{
+									Name:     "LastActivityAt",
+									Optional: true,
+									Type:     smd.String,
+								},
+								{
+									Name:     "StatisticID",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name: "StatusID",
+									Type: smd.Integer,
+								},
+								{
+									Name:     "ApiKey",
+									Optional: true,
+									Type:     smd.String,
+								},
+							},
+						},
+					},
+				},
+				Errors: map[int]string{
+					401: "Unauthorized",
+					500: "Internal Error",
+				},
+			},
+			"AddCategory": {
+				Description: `AddCategory creates a new category.`,
+				Parameters: []smd.JSONSchema{
+					{
+						Name:        "title",
+						Description: `Category title`,
+						Type:        smd.String,
+					},
+					{
+						Name:        "parentCategoryId",
+						Optional:    true,
+						Description: `Parent category ID (null for root)`,
+						Type:        smd.Integer,
+					},
+				},
+				Returns: smd.JSONSchema{
+					Description: `Created category ID`,
+					Type:        smd.Integer,
+				},
+				Errors: map[int]string{
+					401: "Unauthorized",
+					500: "Internal Error",
+				},
+			},
+			"Add": {
+				Description: `Add creates a new exercise.`,
+				Parameters: []smd.JSONSchema{
+					{
+						Name:        "title",
+						Description: `Exercise title`,
+						Type:        smd.String,
+					},
+					{
+						Name:        "categoryId",
+						Description: `Category ID`,
+						Type:        smd.Integer,
+					},
+					{
+						Name:        "typeId",
+						Description: `Exercise type: 1=Strength, 2=Timed`,
+						Type:        smd.Integer,
+					},
+				},
+				Returns: smd.JSONSchema{
+					Description: `Created exercise ID`,
+					Type:        smd.Integer,
+				},
+				Errors: map[int]string{
+					401: "Unauthorized",
+					500: "Internal Error",
+				},
+			},
+		},
+	}
+}
+
+// Invoke is as generated code from zenrpc cmd
+func (s ExerciseService) Invoke(ctx context.Context, method string, params json.RawMessage) zenrpc.Response {
+	resp := zenrpc.Response{}
+	var err error
+
+	switch method {
+	case RPC.ExerciseService.CategoryList:
+		var args = struct {
+			ParentId *int `json:"parentId"`
+		}{}
+
+		if zenrpc.IsArray(params) {
+			if params, err = zenrpc.ConvertToObject([]string{"parentId"}, params); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		if len(params) > 0 {
+			if err := json.Unmarshal(params, &args); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		resp.Set(s.CategoryList(ctx, args.ParentId))
+
+	case RPC.ExerciseService.List:
+		var args = struct {
+			CategoryId int `json:"categoryId"`
+		}{}
+
+		if zenrpc.IsArray(params) {
+			if params, err = zenrpc.ConvertToObject([]string{"categoryId"}, params); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		if len(params) > 0 {
+			if err := json.Unmarshal(params, &args); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		resp.Set(s.List(ctx, args.CategoryId))
+
+	case RPC.ExerciseService.AddCategory:
+		var args = struct {
+			Title            string `json:"title"`
+			ParentCategoryId *int   `json:"parentCategoryId"`
+		}{}
+
+		if zenrpc.IsArray(params) {
+			if params, err = zenrpc.ConvertToObject([]string{"title", "parentCategoryId"}, params); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		if len(params) > 0 {
+			if err := json.Unmarshal(params, &args); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		resp.Set(s.AddCategory(ctx, args.Title, args.ParentCategoryId))
+
+	case RPC.ExerciseService.Add:
+		var args = struct {
+			Title      string `json:"title"`
+			CategoryId int    `json:"categoryId"`
+			TypeId     int    `json:"typeId"`
+		}{}
+
+		if zenrpc.IsArray(params) {
+			if params, err = zenrpc.ConvertToObject([]string{"title", "categoryId", "typeId"}, params); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		if len(params) > 0 {
+			if err := json.Unmarshal(params, &args); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		resp.Set(s.Add(ctx, args.Title, args.CategoryId, args.TypeId))
+
+	default:
+		resp = zenrpc.NewResponseError(nil, zenrpc.MethodNotFound, "", nil)
+	}
+
+	return resp
 }
 
 func (TrainingService) SMD() smd.ServiceInfo {
 	return smd.ServiceInfo{
-		Methods: map[string]smd.Service{},
+		Methods: map[string]smd.Service{
+			"List": {
+				Description: `List returns trainings for a given date or date range.`,
+				Parameters: []smd.JSONSchema{
+					{
+						Name:        "date",
+						Optional:    true,
+						Description: `Filter by specific date (YYYY-MM-DD)`,
+						Type:        smd.String,
+					},
+					{
+						Name:        "from",
+						Optional:    true,
+						Description: `Range start date (YYYY-MM-DD)`,
+						Type:        smd.String,
+					},
+					{
+						Name:        "to",
+						Optional:    true,
+						Description: `Range end date (YYYY-MM-DD)`,
+						Type:        smd.String,
+					},
+				},
+				Returns: smd.JSONSchema{
+					Description: `List of trainings`,
+					Type:        smd.Object,
+					TypeName:    "WorkoutTrainings",
+					Properties:  smd.PropertyList{},
+				},
+				Errors: map[int]string{
+					401: "Unauthorized",
+					500: "Internal Error",
+				},
+			},
+			"Get": {
+				Description: `Get returns a full training with exercises and approaches.`,
+				Parameters: []smd.JSONSchema{
+					{
+						Name:        "id",
+						Description: `Training ID`,
+						Type:        smd.Integer,
+					},
+				},
+				Returns: smd.JSONSchema{
+					Description: `Full training details`,
+					Optional:    true,
+					Type:        smd.Object,
+					TypeName:    "TrainingDetail",
+					Properties: smd.PropertyList{
+						{
+							Name: "ID",
+							Type: smd.Integer,
+						},
+						{
+							Name: "SiteUserID",
+							Type: smd.Integer,
+						},
+						{
+							Name: "ApproachIDs",
+							Type: smd.Array,
+							Items: map[string]string{
+								"type": smd.Integer,
+							},
+						},
+						{
+							Name: "StartedAt",
+							Type: smd.String,
+						},
+						{
+							Name:     "EndedAt",
+							Optional: true,
+							Type:     smd.String,
+						},
+						{
+							Name: "StatusID",
+							Type: smd.Integer,
+						},
+						{
+							Name:     "SiteUser",
+							Optional: true,
+							Ref:      "#/definitions/db.SiteUser",
+							Type:     smd.Object,
+						},
+						{
+							Name: "Date",
+							Type: smd.String,
+						},
+						{
+							Name: "exercises",
+							Type: smd.Array,
+							Items: map[string]string{
+								"$ref": "#/definitions/ExerciseWithApproaches",
+							},
+						},
+					},
+					Definitions: map[string]smd.Definition{
+						"db.SiteUser": {
+							Type: "object",
+							Properties: smd.PropertyList{
+								{
+									Name: "ID",
+									Type: smd.Integer,
+								},
+								{
+									Name: "TgID",
+									Type: smd.Integer,
+								},
+								{
+									Name: "CreatedAt",
+									Type: smd.String,
+								},
+								{
+									Name:     "LastActivityAt",
+									Optional: true,
+									Type:     smd.String,
+								},
+								{
+									Name:     "StatisticID",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name: "StatusID",
+									Type: smd.Integer,
+								},
+								{
+									Name:     "ApiKey",
+									Optional: true,
+									Type:     smd.String,
+								},
+							},
+						},
+						"ExerciseWithApproaches": {
+							Type: "object",
+							Properties: smd.PropertyList{
+								{
+									Name: "exercise",
+									Ref:  "#/definitions/db.Exercise",
+									Type: smd.Object,
+								},
+								{
+									Name: "approaches",
+									Ref:  "#/definitions/workout.Approaches",
+									Type: smd.Object,
+								},
+							},
+						},
+						"db.Exercise": {
+							Type: "object",
+							Properties: smd.PropertyList{
+								{
+									Name: "ID",
+									Type: smd.Integer,
+								},
+								{
+									Name: "Title",
+									Type: smd.String,
+								},
+								{
+									Name: "CategoryID",
+									Type: smd.Integer,
+								},
+								{
+									Name:     "SiteUserID",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name: "TypeID",
+									Type: smd.Integer,
+								},
+								{
+									Name: "StatusID",
+									Type: smd.Integer,
+								},
+								{
+									Name:     "Category",
+									Optional: true,
+									Ref:      "#/definitions/db.Category",
+									Type:     smd.Object,
+								},
+								{
+									Name:     "SiteUser",
+									Optional: true,
+									Ref:      "#/definitions/db.SiteUser",
+									Type:     smd.Object,
+								},
+							},
+						},
+						"db.Category": {
+							Type: "object",
+							Properties: smd.PropertyList{
+								{
+									Name: "ID",
+									Type: smd.Integer,
+								},
+								{
+									Name:     "ParentCategoryID",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name: "Title",
+									Type: smd.String,
+								},
+								{
+									Name:     "SiteUserID",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name: "StatusID",
+									Type: smd.Integer,
+								},
+								{
+									Name:     "ParentCategory",
+									Optional: true,
+									Ref:      "#/definitions/db.Category",
+									Type:     smd.Object,
+								},
+								{
+									Name:     "SiteUser",
+									Optional: true,
+									Ref:      "#/definitions/db.SiteUser",
+									Type:     smd.Object,
+								},
+							},
+						},
+						"workout.Approaches": {
+							Type:       "object",
+							Properties: smd.PropertyList{},
+						},
+					},
+				},
+				Errors: map[int]string{
+					401: "Unauthorized",
+					404: "Not Found",
+					500: "Internal Error",
+				},
+			},
+			"New": {
+				Description: `New creates a new training for the given date.`,
+				Parameters: []smd.JSONSchema{
+					{
+						Name:        "date",
+						Description: `Training date (YYYY-MM-DD)`,
+						Type:        smd.String,
+					},
+				},
+				Returns: smd.JSONSchema{
+					Description: `Created training`,
+					Optional:    true,
+					Type:        smd.Object,
+					TypeName:    "WorkoutTraining",
+					Properties: smd.PropertyList{
+						{
+							Name: "ID",
+							Type: smd.Integer,
+						},
+						{
+							Name: "SiteUserID",
+							Type: smd.Integer,
+						},
+						{
+							Name: "ApproachIDs",
+							Type: smd.Array,
+							Items: map[string]string{
+								"type": smd.Integer,
+							},
+						},
+						{
+							Name: "StartedAt",
+							Type: smd.String,
+						},
+						{
+							Name:     "EndedAt",
+							Optional: true,
+							Type:     smd.String,
+						},
+						{
+							Name: "StatusID",
+							Type: smd.Integer,
+						},
+						{
+							Name:     "SiteUser",
+							Optional: true,
+							Ref:      "#/definitions/db.SiteUser",
+							Type:     smd.Object,
+						},
+						{
+							Name: "Date",
+							Type: smd.String,
+						},
+					},
+					Definitions: map[string]smd.Definition{
+						"db.SiteUser": {
+							Type: "object",
+							Properties: smd.PropertyList{
+								{
+									Name: "ID",
+									Type: smd.Integer,
+								},
+								{
+									Name: "TgID",
+									Type: smd.Integer,
+								},
+								{
+									Name: "CreatedAt",
+									Type: smd.String,
+								},
+								{
+									Name:     "LastActivityAt",
+									Optional: true,
+									Type:     smd.String,
+								},
+								{
+									Name:     "StatisticID",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name: "StatusID",
+									Type: smd.Integer,
+								},
+								{
+									Name:     "ApiKey",
+									Optional: true,
+									Type:     smd.String,
+								},
+							},
+						},
+					},
+				},
+				Errors: map[int]string{
+					401: "Unauthorized",
+					500: "Internal Error",
+				},
+			},
+			"Delete": {
+				Description: `Delete soft-deletes a training and all its approaches.`,
+				Parameters: []smd.JSONSchema{
+					{
+						Name:        "id",
+						Description: `Training ID`,
+						Type:        smd.Integer,
+					},
+				},
+				Returns: smd.JSONSchema{
+					Description: `Success`,
+					Type:        smd.Boolean,
+					TypeName:    "Success",
+				},
+				Errors: map[int]string{
+					401: "Unauthorized",
+					500: "Internal Error",
+				},
+			},
+			"ExerciseList": {
+				Description: `ExerciseList returns unique exercises in a training.`,
+				Parameters: []smd.JSONSchema{
+					{
+						Name:        "trainingId",
+						Description: `Training ID`,
+						Type:        smd.Integer,
+					},
+				},
+				Returns: smd.JSONSchema{
+					Description: `List of exercises`,
+					Type:        smd.Array,
+					TypeName:    "[]DbExercise",
+					Items: map[string]string{
+						"$ref": "#/definitions/db.Exercise",
+					},
+					Definitions: map[string]smd.Definition{
+						"db.Exercise": {
+							Type: "object",
+							Properties: smd.PropertyList{
+								{
+									Name: "ID",
+									Type: smd.Integer,
+								},
+								{
+									Name: "Title",
+									Type: smd.String,
+								},
+								{
+									Name: "CategoryID",
+									Type: smd.Integer,
+								},
+								{
+									Name:     "SiteUserID",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name: "TypeID",
+									Type: smd.Integer,
+								},
+								{
+									Name: "StatusID",
+									Type: smd.Integer,
+								},
+								{
+									Name:     "Category",
+									Optional: true,
+									Ref:      "#/definitions/db.Category",
+									Type:     smd.Object,
+								},
+								{
+									Name:     "SiteUser",
+									Optional: true,
+									Ref:      "#/definitions/db.SiteUser",
+									Type:     smd.Object,
+								},
+							},
+						},
+						"db.Category": {
+							Type: "object",
+							Properties: smd.PropertyList{
+								{
+									Name: "ID",
+									Type: smd.Integer,
+								},
+								{
+									Name:     "ParentCategoryID",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name: "Title",
+									Type: smd.String,
+								},
+								{
+									Name:     "SiteUserID",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name: "StatusID",
+									Type: smd.Integer,
+								},
+								{
+									Name:     "ParentCategory",
+									Optional: true,
+									Ref:      "#/definitions/db.Category",
+									Type:     smd.Object,
+								},
+								{
+									Name:     "SiteUser",
+									Optional: true,
+									Ref:      "#/definitions/db.SiteUser",
+									Type:     smd.Object,
+								},
+							},
+						},
+						"db.SiteUser": {
+							Type: "object",
+							Properties: smd.PropertyList{
+								{
+									Name: "ID",
+									Type: smd.Integer,
+								},
+								{
+									Name: "TgID",
+									Type: smd.Integer,
+								},
+								{
+									Name: "CreatedAt",
+									Type: smd.String,
+								},
+								{
+									Name:     "LastActivityAt",
+									Optional: true,
+									Type:     smd.String,
+								},
+								{
+									Name:     "StatisticID",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name: "StatusID",
+									Type: smd.Integer,
+								},
+								{
+									Name:     "ApiKey",
+									Optional: true,
+									Type:     smd.String,
+								},
+							},
+						},
+					},
+				},
+				Errors: map[int]string{
+					401: "Unauthorized",
+					500: "Internal Error",
+				},
+			},
+			"ApproachList": {
+				Description: `ApproachList returns approaches for an exercise in a training.`,
+				Parameters: []smd.JSONSchema{
+					{
+						Name:        "trainingId",
+						Description: `Training ID`,
+						Type:        smd.Integer,
+					},
+					{
+						Name:        "exerciseId",
+						Description: `Exercise ID`,
+						Type:        smd.Integer,
+					},
+				},
+				Returns: smd.JSONSchema{
+					Description: `List of approaches`,
+					Type:        smd.Object,
+					TypeName:    "WorkoutApproaches",
+					Properties:  smd.PropertyList{},
+				},
+				Errors: map[int]string{
+					401: "Unauthorized",
+					500: "Internal Error",
+				},
+			},
+			"AddApproach": {
+				Description: `AddApproach adds a strength approach (reps + weight) to a training.`,
+				Parameters: []smd.JSONSchema{
+					{
+						Name:        "trainingId",
+						Description: `Training ID`,
+						Type:        smd.Integer,
+					},
+					{
+						Name:        "exerciseId",
+						Description: `Exercise ID`,
+						Type:        smd.Integer,
+					},
+					{
+						Name:        "reps",
+						Description: `Number of repetitions`,
+						Type:        smd.Integer,
+					},
+					{
+						Name:        "weight",
+						Description: `Weight in kg`,
+						Type:        smd.Float,
+					},
+				},
+				Returns: smd.JSONSchema{
+					Description: `Created approach ID`,
+					Type:        smd.Integer,
+				},
+				Errors: map[int]string{
+					401: "Unauthorized",
+					500: "Internal Error",
+				},
+			},
+			"AddTimedApproach": {
+				Description: `AddTimedApproach adds a timed approach (duration in seconds) to a training.`,
+				Parameters: []smd.JSONSchema{
+					{
+						Name:        "trainingId",
+						Description: `Training ID`,
+						Type:        smd.Integer,
+					},
+					{
+						Name:        "exerciseId",
+						Description: `Exercise ID`,
+						Type:        smd.Integer,
+					},
+					{
+						Name:        "duration",
+						Description: `Duration in seconds`,
+						Type:        smd.Integer,
+					},
+				},
+				Returns: smd.JSONSchema{
+					Description: `Created approach ID`,
+					Type:        smd.Integer,
+				},
+				Errors: map[int]string{
+					401: "Unauthorized",
+					500: "Internal Error",
+				},
+			},
+			"UpdateApproach": {
+				Description: `UpdateApproach updates reps and weight of a strength approach.`,
+				Parameters: []smd.JSONSchema{
+					{
+						Name:        "approachId",
+						Description: `Approach ID`,
+						Type:        smd.Integer,
+					},
+					{
+						Name:        "reps",
+						Description: `Number of repetitions`,
+						Type:        smd.Integer,
+					},
+					{
+						Name:        "weight",
+						Description: `Weight in kg`,
+						Type:        smd.Float,
+					},
+				},
+				Returns: smd.JSONSchema{
+					Description: `Success`,
+					Type:        smd.Boolean,
+					TypeName:    "Success",
+				},
+				Errors: map[int]string{
+					401: "Unauthorized",
+					500: "Internal Error",
+				},
+			},
+			"UpdateTimedApproach": {
+				Description: `UpdateTimedApproach updates duration of a timed approach.`,
+				Parameters: []smd.JSONSchema{
+					{
+						Name:        "approachId",
+						Description: `Approach ID`,
+						Type:        smd.Integer,
+					},
+					{
+						Name:        "duration",
+						Description: `Duration in seconds`,
+						Type:        smd.Integer,
+					},
+				},
+				Returns: smd.JSONSchema{
+					Description: `Success`,
+					Type:        smd.Boolean,
+					TypeName:    "Success",
+				},
+				Errors: map[int]string{
+					401: "Unauthorized",
+					500: "Internal Error",
+				},
+			},
+			"DeleteApproach": {
+				Description: `DeleteApproach soft-deletes an approach from a training.`,
+				Parameters: []smd.JSONSchema{
+					{
+						Name:        "trainingId",
+						Description: `Training ID`,
+						Type:        smd.Integer,
+					},
+					{
+						Name:        "approachId",
+						Description: `Approach ID`,
+						Type:        smd.Integer,
+					},
+				},
+				Returns: smd.JSONSchema{
+					Description: `Success`,
+					Type:        smd.Boolean,
+					TypeName:    "Success",
+				},
+				Errors: map[int]string{
+					401: "Unauthorized",
+					500: "Internal Error",
+				},
+			},
+		},
 	}
 }
 
 // Invoke is as generated code from zenrpc cmd
 func (s TrainingService) Invoke(ctx context.Context, method string, params json.RawMessage) zenrpc.Response {
 	resp := zenrpc.Response{}
+	var err error
 
 	switch method {
+	case RPC.TrainingService.List:
+		var args = struct {
+			Date *string `json:"date"`
+			From *string `json:"from"`
+			To   *string `json:"to"`
+		}{}
+
+		if zenrpc.IsArray(params) {
+			if params, err = zenrpc.ConvertToObject([]string{"date", "from", "to"}, params); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		if len(params) > 0 {
+			if err := json.Unmarshal(params, &args); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		resp.Set(s.List(ctx, args.Date, args.From, args.To))
+
+	case RPC.TrainingService.Get:
+		var args = struct {
+			Id int `json:"id"`
+		}{}
+
+		if zenrpc.IsArray(params) {
+			if params, err = zenrpc.ConvertToObject([]string{"id"}, params); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		if len(params) > 0 {
+			if err := json.Unmarshal(params, &args); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		resp.Set(s.Get(ctx, args.Id))
+
+	case RPC.TrainingService.New:
+		var args = struct {
+			Date string `json:"date"`
+		}{}
+
+		if zenrpc.IsArray(params) {
+			if params, err = zenrpc.ConvertToObject([]string{"date"}, params); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		if len(params) > 0 {
+			if err := json.Unmarshal(params, &args); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		resp.Set(s.New(ctx, args.Date))
+
+	case RPC.TrainingService.Delete:
+		var args = struct {
+			Id int `json:"id"`
+		}{}
+
+		if zenrpc.IsArray(params) {
+			if params, err = zenrpc.ConvertToObject([]string{"id"}, params); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		if len(params) > 0 {
+			if err := json.Unmarshal(params, &args); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		resp.Set(s.Delete(ctx, args.Id))
+
+	case RPC.TrainingService.ExerciseList:
+		var args = struct {
+			TrainingId int `json:"trainingId"`
+		}{}
+
+		if zenrpc.IsArray(params) {
+			if params, err = zenrpc.ConvertToObject([]string{"trainingId"}, params); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		if len(params) > 0 {
+			if err := json.Unmarshal(params, &args); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		resp.Set(s.ExerciseList(ctx, args.TrainingId))
+
+	case RPC.TrainingService.ApproachList:
+		var args = struct {
+			TrainingId int `json:"trainingId"`
+			ExerciseId int `json:"exerciseId"`
+		}{}
+
+		if zenrpc.IsArray(params) {
+			if params, err = zenrpc.ConvertToObject([]string{"trainingId", "exerciseId"}, params); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		if len(params) > 0 {
+			if err := json.Unmarshal(params, &args); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		resp.Set(s.ApproachList(ctx, args.TrainingId, args.ExerciseId))
+
+	case RPC.TrainingService.AddApproach:
+		var args = struct {
+			TrainingId int     `json:"trainingId"`
+			ExerciseId int     `json:"exerciseId"`
+			Reps       int     `json:"reps"`
+			Weight     float64 `json:"weight"`
+		}{}
+
+		if zenrpc.IsArray(params) {
+			if params, err = zenrpc.ConvertToObject([]string{"trainingId", "exerciseId", "reps", "weight"}, params); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		if len(params) > 0 {
+			if err := json.Unmarshal(params, &args); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		resp.Set(s.AddApproach(ctx, args.TrainingId, args.ExerciseId, args.Reps, args.Weight))
+
+	case RPC.TrainingService.AddTimedApproach:
+		var args = struct {
+			TrainingId int `json:"trainingId"`
+			ExerciseId int `json:"exerciseId"`
+			Duration   int `json:"duration"`
+		}{}
+
+		if zenrpc.IsArray(params) {
+			if params, err = zenrpc.ConvertToObject([]string{"trainingId", "exerciseId", "duration"}, params); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		if len(params) > 0 {
+			if err := json.Unmarshal(params, &args); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		resp.Set(s.AddTimedApproach(ctx, args.TrainingId, args.ExerciseId, args.Duration))
+
+	case RPC.TrainingService.UpdateApproach:
+		var args = struct {
+			ApproachId int     `json:"approachId"`
+			Reps       int     `json:"reps"`
+			Weight     float64 `json:"weight"`
+		}{}
+
+		if zenrpc.IsArray(params) {
+			if params, err = zenrpc.ConvertToObject([]string{"approachId", "reps", "weight"}, params); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		if len(params) > 0 {
+			if err := json.Unmarshal(params, &args); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		resp.Set(s.UpdateApproach(ctx, args.ApproachId, args.Reps, args.Weight))
+
+	case RPC.TrainingService.UpdateTimedApproach:
+		var args = struct {
+			ApproachId int `json:"approachId"`
+			Duration   int `json:"duration"`
+		}{}
+
+		if zenrpc.IsArray(params) {
+			if params, err = zenrpc.ConvertToObject([]string{"approachId", "duration"}, params); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		if len(params) > 0 {
+			if err := json.Unmarshal(params, &args); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		resp.Set(s.UpdateTimedApproach(ctx, args.ApproachId, args.Duration))
+
+	case RPC.TrainingService.DeleteApproach:
+		var args = struct {
+			TrainingId int `json:"trainingId"`
+			ApproachId int `json:"approachId"`
+		}{}
+
+		if zenrpc.IsArray(params) {
+			if params, err = zenrpc.ConvertToObject([]string{"trainingId", "approachId"}, params); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		if len(params) > 0 {
+			if err := json.Unmarshal(params, &args); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		resp.Set(s.DeleteApproach(ctx, args.TrainingId, args.ApproachId))
+
 	default:
 		resp = zenrpc.NewResponseError(nil, zenrpc.MethodNotFound, "", nil)
 	}

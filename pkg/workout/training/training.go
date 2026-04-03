@@ -57,6 +57,41 @@ func (tm Manager) TrainingList(ctx context.Context, tgId int, date *time.Time) (
 	return workout.NewTrainings(trainings), err
 }
 
+// TrainingListByRange returns trainings for a date range (both from/to can be nil for all).
+func (tm Manager) TrainingListByRange(ctx context.Context, tgId int, from, to *time.Time) (workout.Trainings, error) {
+	user, err := tm.ur.OneSiteUser(ctx, &db.SiteUserSearch{TgID: &tgId})
+	if err != nil {
+		return nil, err
+	} else if user == nil {
+		return nil, nil
+	}
+
+	trainings, err := tm.tr.TrainingsByFilters(ctx,
+		&db.TrainingSearch{SiteUserID: &user.ID, StatusID: workout.Ptr(db.StatusEnabled), StartedAtGrater: from, StartedAtLess: to},
+		db.PagerNoLimit,
+	)
+	return workout.NewTrainings(trainings), err
+}
+
+// TrainingByID returns a single training by id.
+func (tm Manager) TrainingByID(ctx context.Context, tgId, trainingId int) (*workout.Training, error) {
+	user, err := tm.ur.OneSiteUser(ctx, &db.SiteUserSearch{TgID: &tgId})
+	if err != nil {
+		return nil, err
+	} else if user == nil {
+		return nil, nil
+	}
+
+	t, err := tm.tr.TrainingByID(ctx, trainingId)
+	if err != nil {
+		return nil, err
+	}
+	if t == nil || t.SiteUserID != user.ID {
+		return nil, nil
+	}
+	return workout.NewTraining(t), nil
+}
+
 // ExerciseList returns unique exercises present in a training, in order of first appearance.
 func (tm Manager) ExerciseList(ctx context.Context, tgId, trainingId int) ([]db.Exercise, error) {
 	user, err := tm.ur.OneSiteUser(ctx, &db.SiteUserSearch{TgID: &tgId})
@@ -147,21 +182,22 @@ func (tm Manager) NewTraining(ctx context.Context, tgId int, date time.Time) (*w
 }
 
 // AddApproach creates an approach with filled fields and appends it to the training.
-func (tm Manager) AddApproach(ctx context.Context, tgId, trainingId, exerciseId, reps int, weight float64) error {
+func (tm Manager) AddApproach(ctx context.Context, tgId, trainingId, exerciseId, reps int, weight float64) (int, error) {
 	user, err := tm.ur.OneSiteUser(ctx, &db.SiteUserSearch{TgID: &tgId})
 	if err != nil {
-		return err
+		return 0, err
 	} else if user == nil {
-		return errors.New("user not found")
+		return 0, errors.New("user not found")
 	}
 
 	training, err := tm.tr.TrainingByID(ctx, trainingId)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	weightInt := int(weight)
-	return tm.dbo.RunInLock(ctx, fmt.Sprintf("training#%v", training.ID), func(tx *pg.Tx) error {
+	var approachID int
+	err = tm.dbo.RunInLock(ctx, fmt.Sprintf("training#%v", training.ID), func(tx *pg.Tx) error {
 		trainingRepo := tm.tr.WithTransaction(tx)
 
 		approach, err := trainingRepo.AddApproach(ctx, &db.Approach{
@@ -174,6 +210,7 @@ func (tm Manager) AddApproach(ctx context.Context, tgId, trainingId, exerciseId,
 		if err != nil {
 			return err
 		}
+		approachID = approach.ID
 
 		training.ApproachIDs = append(training.ApproachIDs, approach.ID)
 		updated, err := trainingRepo.UpdateTraining(ctx, training, db.WithColumns(db.Columns.Training.ApproachIDs))
@@ -184,6 +221,7 @@ func (tm Manager) AddApproach(ctx context.Context, tgId, trainingId, exerciseId,
 		}
 		return nil
 	})
+	return approachID, err
 }
 
 // UpdateApproach updates reps and weight of an existing approach.
@@ -307,20 +345,21 @@ func (tm Manager) ExerciseType(ctx context.Context, tgId, exerciseId int) (int, 
 }
 
 // AddTimedApproach creates an approach with Duration set and appends it to the training.
-func (tm Manager) AddTimedApproach(ctx context.Context, tgId, trainingId, exerciseId, duration int) error {
+func (tm Manager) AddTimedApproach(ctx context.Context, tgId, trainingId, exerciseId, duration int) (int, error) {
 	user, err := tm.ur.OneSiteUser(ctx, &db.SiteUserSearch{TgID: &tgId})
 	if err != nil {
-		return err
+		return 0, err
 	} else if user == nil {
-		return errors.New("user not found")
+		return 0, errors.New("user not found")
 	}
 
 	training, err := tm.tr.TrainingByID(ctx, trainingId)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return tm.dbo.RunInLock(ctx, fmt.Sprintf("training#%v", training.ID), func(tx *pg.Tx) error {
+	var approachID int
+	err = tm.dbo.RunInLock(ctx, fmt.Sprintf("training#%v", training.ID), func(tx *pg.Tx) error {
 		trainingRepo := tm.tr.WithTransaction(tx)
 
 		approach, err := trainingRepo.AddApproach(ctx, &db.Approach{
@@ -332,6 +371,7 @@ func (tm Manager) AddTimedApproach(ctx context.Context, tgId, trainingId, exerci
 		if err != nil {
 			return err
 		}
+		approachID = approach.ID
 
 		training.ApproachIDs = append(training.ApproachIDs, approach.ID)
 		updated, err := trainingRepo.UpdateTraining(ctx, training, db.WithColumns(db.Columns.Training.ApproachIDs))
@@ -342,6 +382,7 @@ func (tm Manager) AddTimedApproach(ctx context.Context, tgId, trainingId, exerci
 		}
 		return nil
 	})
+	return approachID, err
 }
 
 // UpdateTimedApproach updates only Duration of an existing approach.

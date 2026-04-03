@@ -489,6 +489,7 @@ type SiteUserSearch struct {
 	LastActivityAt *time.Time
 	StatisticID    *int
 	StatusID       *int
+	ApiKey         *string
 	IDs            []int
 }
 
@@ -513,6 +514,9 @@ func (sus *SiteUserSearch) Apply(query *orm.Query) *orm.Query {
 	}
 	if sus.StatusID != nil {
 		sus.where(query, Tables.SiteUser.Alias, Columns.SiteUser.StatusID, sus.StatusID)
+	}
+	if sus.ApiKey != nil {
+		sus.where(query, Tables.SiteUser.Alias, Columns.SiteUser.ApiKey, sus.ApiKey)
 	}
 	if len(sus.IDs) > 0 {
 		Filter{Columns.SiteUser.ID, sus.IDs, SearchTypeArray, false}.Apply(query)
