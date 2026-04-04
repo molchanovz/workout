@@ -36,8 +36,15 @@ type Config struct {
 		Environment string
 		DSN         string
 	}
-	VFS vfs.Config
-	Bot bot.Config
+	VFS    vfs.Config
+	Bot    bot.Config
+	Google struct {
+		ClientID     string
+		ClientSecret string
+		RedirectURL  string
+		FrontendURL  string
+		JWTSecret    string
+	}
 }
 
 type App struct {
@@ -71,6 +78,7 @@ func New(appName string, sl embedlog.Logger, cfg Config, db db.DB, dbc *pg.DB) *
 	a.echo.IPExtractor = echo.ExtractIPFromRealIPHeader(echo.TrustIPRange(mask))
 
 	a.bm = bot.NewManager(a.db, a.Logger)
+	a.trainingManager = training.NewTrainingManager(a.db, a.Logger)
 
 	opts := []botlib.Option{botlib.WithDefaultHandler(a.bm.DefaultHandler)}
 	if cfg.Bot.ProxyURL != "" {

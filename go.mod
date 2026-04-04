@@ -10,6 +10,7 @@ require (
 	github.com/go-pg/urlstruct v1.0.1
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/go-telegram/bot v1.17.0
+	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/hypnoglow/go-pg-monitor v1.2.0
 	github.com/hypnoglow/go-pg-monitor/gopgv10 v1.2.0
 	github.com/labstack/echo/v4 v4.13.4
@@ -22,9 +23,11 @@ require (
 	github.com/vmkteam/zenrpc-middleware v1.2.1
 	github.com/vmkteam/zenrpc/v2 v2.2.12
 	golang.org/x/crypto v0.41.0
+	golang.org/x/oauth2 v0.30.0
 )
 
 require (
+	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	github.com/bbrks/go-blurhash v1.1.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect

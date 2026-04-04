@@ -11,9 +11,13 @@ import (
 )
 
 var RPC = struct {
+	AuthService     struct{ TelegramLogin string }
 	ExerciseService struct{ CategoryList, List, AddCategory, Add string }
 	TrainingService struct{ List, Get, New, Delete, ExerciseList, ApproachList, AddApproach, AddTimedApproach, UpdateApproach, UpdateTimedApproach, DeleteApproach string }
 }{
+	AuthService: struct{ TelegramLogin string }{
+		TelegramLogin: "telegramlogin",
+	},
 	ExerciseService: struct{ CategoryList, List, AddCategory, Add string }{
 		CategoryList: "categorylist",
 		List:         "list",
@@ -33,6 +37,93 @@ var RPC = struct {
 		UpdateTimedApproach: "updatetimedapproach",
 		DeleteApproach:      "deleteapproach",
 	},
+}
+
+func (AuthService) SMD() smd.ServiceInfo {
+	return smd.ServiceInfo{
+		Methods: map[string]smd.Service{
+			"TelegramLogin": {
+				Description: `TelegramLogin аутентифицирует пользователя через Telegram Login Widget.`,
+				Parameters: []smd.JSONSchema{
+					{
+						Name: "tgID",
+						Type: smd.Integer,
+					},
+					{
+						Name: "firstName",
+						Type: smd.String,
+					},
+					{
+						Name: "lastName",
+						Type: smd.String,
+					},
+					{
+						Name: "username",
+						Type: smd.String,
+					},
+					{
+						Name: "photoURL",
+						Type: smd.String,
+					},
+					{
+						Name: "authDate",
+						Type: smd.Integer,
+					},
+					{
+						Name: "hash",
+						Type: smd.String,
+					},
+				},
+				Returns: smd.JSONSchema{
+					Description: `JWT-токен для дальнейших RPC-запросов`,
+					Optional:    true,
+					Type:        smd.String,
+				},
+				Errors: map[int]string{
+					400: "Невалидные или устаревшие данные Telegram",
+					500: "Внутренняя ошибка",
+				},
+			},
+		},
+	}
+}
+
+// Invoke is as generated code from zenrpc cmd
+func (s AuthService) Invoke(ctx context.Context, method string, params json.RawMessage) zenrpc.Response {
+	resp := zenrpc.Response{}
+	var err error
+
+	switch method {
+	case RPC.AuthService.TelegramLogin:
+		var args = struct {
+			TgID      int64  `json:"tgID"`
+			FirstName string `json:"firstName"`
+			LastName  string `json:"lastName"`
+			Username  string `json:"username"`
+			PhotoURL  string `json:"photoURL"`
+			AuthDate  int64  `json:"authDate"`
+			Hash      string `json:"hash"`
+		}{}
+
+		if zenrpc.IsArray(params) {
+			if params, err = zenrpc.ConvertToObject([]string{"tgID", "firstName", "lastName", "username", "photoURL", "authDate", "hash"}, params); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		if len(params) > 0 {
+			if err := json.Unmarshal(params, &args); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		resp.Set(s.TelegramLogin(ctx, args.TgID, args.FirstName, args.LastName, args.Username, args.PhotoURL, args.AuthDate, args.Hash))
+
+	default:
+		resp = zenrpc.NewResponseError(nil, zenrpc.MethodNotFound, "", nil)
+	}
+
+	return resp
 }
 
 func (ExerciseService) SMD() smd.ServiceInfo {

@@ -43,6 +43,10 @@ func (a *App) registerHandlers() {
 	}))
 
 	a.echo.Use(zm.EchoIPContext(), zm.EchoSentryHubContext())
+
+	// Google OAuth
+	a.echo.GET("/auth/google", a.handleGoogleLogin)
+	a.echo.GET("/auth/google/callback", a.handleGoogleCallback)
 }
 
 // registerDebugHandlers adds /debug/pprof handlers into a.echo instance.
@@ -81,6 +85,7 @@ func (a *App) registerAPIHandlers() {
 		DB:              a.db,
 		Logger:          a.Logger,
 		TrainingManager: a.trainingManager,
+		BotToken:        a.cfg.Bot.Token,
 	}
 
 	srv := rpc.New(opts, a.cfg.Server.IsDevel)

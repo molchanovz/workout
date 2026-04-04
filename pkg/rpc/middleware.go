@@ -14,7 +14,7 @@ type siteUserCtx string
 
 const siteUserKey siteUserCtx = "rpc.siteUser"
 
-const AuthKey = "Authorization"
+const AuthKey = "Authorization2"
 
 var ErrUnauthorized = zenrpc.NewStringError(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized))
 

@@ -37,6 +37,7 @@ type Options struct {
 	DB              db.DB
 	Logger          embedlog.Logger
 	TrainingManager *training.Manager
+	BotToken        string
 }
 
 //go:generate zenrpc

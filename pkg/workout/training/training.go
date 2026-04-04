@@ -170,8 +170,18 @@ func (tm Manager) NewTraining(ctx context.Context, tgId int, date time.Time) (*w
 		return nil, errors.New("user not found")
 	}
 
+	return tm.newTraining(ctx, user.ID, date)
+}
+
+// NewTrainingForUser creates a new training session for a user identified by siteUserID.
+func (tm Manager) NewTrainingForUser(ctx context.Context, siteUserID int, date time.Time) (*workout.Training, error) {
+	return tm.newTraining(ctx, siteUserID, date)
+}
+
+func (tm Manager) newTraining(ctx context.Context, siteUserID int, date time.Time) (*workout.Training, error) {
+	fmt.Println("OK")
 	training, err := tm.tr.AddTraining(ctx, &db.Training{
-		SiteUserID: user.ID,
+		SiteUserID: siteUserID,
 		StartedAt:  date,
 		StatusID:   db.StatusEnabled,
 	})

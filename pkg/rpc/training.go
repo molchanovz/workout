@@ -145,7 +145,7 @@ func (s TrainingService) New(ctx context.Context, date string) (*workout.Trainin
 		return nil, zenrpc.NewStringError(http.StatusBadRequest, "invalid date format")
 	}
 
-	return s.tm.NewTraining(ctx, user.TgID, t)
+	return s.tm.NewTrainingForUser(ctx, user.ID, t)
 }
 
 // Delete soft-deletes a training and all its approaches.

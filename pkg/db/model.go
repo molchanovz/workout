@@ -43,7 +43,7 @@ var Columns = struct {
 		SiteUser string
 	}
 	SiteUser struct {
-		ID, TgID, CreatedAt, LastActivityAt, StatisticID, StatusID, ApiKey string
+		ID, TgID, GoogleID, CreatedAt, LastActivityAt, StatisticID, StatusID, ApiKey string
 	}
 }{
 	User: struct {
@@ -149,10 +149,11 @@ var Columns = struct {
 		SiteUser: "SiteUser",
 	},
 	SiteUser: struct {
-		ID, TgID, CreatedAt, LastActivityAt, StatisticID, StatusID, ApiKey string
+		ID, TgID, GoogleID, CreatedAt, LastActivityAt, StatisticID, StatusID, ApiKey string
 	}{
 		ID:             "siteUserId",
 		TgID:           "tgId",
+		GoogleID:       "googleId",
 		CreatedAt:      "createdAt",
 		LastActivityAt: "lastActivityAt",
 		StatisticID:    "statisticId",
@@ -339,6 +340,7 @@ type SiteUser struct {
 
 	ID             int        `pg:"siteUserId,pk"`
 	TgID           int        `pg:"tgId,use_zero"`
+	GoogleID       *string    `pg:"googleId"`
 	CreatedAt      time.Time  `pg:"createdAt,use_zero"`
 	LastActivityAt *time.Time `pg:"lastActivityAt"`
 	StatisticID    *int       `pg:"statisticId"`

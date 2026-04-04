@@ -485,6 +485,7 @@ type SiteUserSearch struct {
 
 	ID             *int
 	TgID           *int
+	GoogleID       *string
 	CreatedAt      *time.Time
 	LastActivityAt *time.Time
 	StatisticID    *int
@@ -502,6 +503,9 @@ func (sus *SiteUserSearch) Apply(query *orm.Query) *orm.Query {
 	}
 	if sus.TgID != nil {
 		sus.where(query, Tables.SiteUser.Alias, Columns.SiteUser.TgID, sus.TgID)
+	}
+	if sus.GoogleID != nil {
+		sus.where(query, Tables.SiteUser.Alias, Columns.SiteUser.GoogleID, sus.GoogleID)
 	}
 	if sus.CreatedAt != nil {
 		sus.where(query, Tables.SiteUser.Alias, Columns.SiteUser.CreatedAt, sus.CreatedAt)
