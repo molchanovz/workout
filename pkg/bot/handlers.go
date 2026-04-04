@@ -147,7 +147,7 @@ func (bm *Manager) textInputHandler(ctx context.Context, b *bot.Bot, update *mod
 
 		var execErr error
 		if state.ApproachID != 0 {
-			execErr = bm.tm.UpdateApproach(ctx, int(tgId), state.ApproachID, state.Reps, weight)
+			execErr = bm.tm.UpdateApproach(ctx, state.ApproachID, state.Reps, weight)
 		} else {
 			_, execErr = bm.tm.AddApproach(ctx, int(tgId), state.TrainingID, state.ExerciseID, state.Reps, weight)
 		}

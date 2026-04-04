@@ -254,7 +254,7 @@ func (s TrainingService) UpdateApproach(ctx context.Context, approachId, reps in
 		return false, errUnauthorized
 	}
 
-	if err := s.tm.UpdateApproach(ctx, user.ID, approachId, reps, weight); err != nil {
+	if err := s.tm.UpdateApproach(ctx, approachId, reps, weight); err != nil {
 		return false, newInternalError(err)
 	}
 	return true, nil
