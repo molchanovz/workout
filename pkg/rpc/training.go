@@ -84,7 +84,7 @@ func (s TrainingService) List(ctx context.Context, date, from, to *string) (work
 		}
 	}
 
-	return s.tm.TrainingListByRange(ctx, user.TgID, fromT, toT)
+	return s.tm.TrainingListByRange(ctx, user.ID, fromT, toT)
 }
 
 // Get returns a full training with exercises and approaches.
