@@ -100,7 +100,7 @@ func (s TrainingService) Get(ctx context.Context, id int) (*TrainingDetail, erro
 		return nil, errUnauthorized
 	}
 
-	t, err := s.tm.TrainingByID(ctx, user.TgID, id)
+	t, err := s.tm.TrainingByID(ctx, user.ID, id)
 	if err != nil {
 		return nil, newInternalError(err)
 	}
@@ -108,14 +108,14 @@ func (s TrainingService) Get(ctx context.Context, id int) (*TrainingDetail, erro
 		return nil, errNotFound
 	}
 
-	exercises, err := s.tm.ExerciseList(ctx, user.TgID, id)
+	exercises, err := s.tm.ExerciseList(ctx, user.ID, id)
 	if err != nil {
 		return nil, newInternalError(err)
 	}
 
 	detail := &TrainingDetail{Training: *t}
 	for _, ex := range exercises {
-		approaches, err := s.tm.ApproachList(ctx, user.TgID, id, ex.ID)
+		approaches, err := s.tm.ApproachList(ctx, user.ID, id, ex.ID)
 		if err != nil {
 			return nil, newInternalError(err)
 		}
@@ -160,7 +160,7 @@ func (s TrainingService) Delete(ctx context.Context, id int) (bool, error) {
 		return false, errUnauthorized
 	}
 
-	if err := s.tm.DeleteTraining(ctx, user.TgID, id); err != nil {
+	if err := s.tm.DeleteTraining(ctx, user.ID, id); err != nil {
 		return false, newInternalError(err)
 	}
 	return true, nil
@@ -178,7 +178,7 @@ func (s TrainingService) ExerciseList(ctx context.Context, trainingId int) ([]db
 		return nil, errUnauthorized
 	}
 
-	return s.tm.ExerciseList(ctx, user.TgID, trainingId)
+	return s.tm.ExerciseList(ctx, user.ID, trainingId)
 }
 
 // ApproachList returns approaches for an exercise in a training.
@@ -194,7 +194,7 @@ func (s TrainingService) ApproachList(ctx context.Context, trainingId, exerciseI
 		return nil, errUnauthorized
 	}
 
-	return s.tm.ApproachList(ctx, user.TgID, trainingId, exerciseId)
+	return s.tm.ApproachList(ctx, user.ID, trainingId, exerciseId)
 }
 
 // AddApproach adds a strength approach (reps + weight) to a training.
@@ -212,7 +212,7 @@ func (s TrainingService) AddApproach(ctx context.Context, trainingId, exerciseId
 		return 0, errUnauthorized
 	}
 
-	id, err := s.tm.AddApproach(ctx, user.TgID, trainingId, exerciseId, reps, weight)
+	id, err := s.tm.AddApproach(ctx, user.ID, trainingId, exerciseId, reps, weight)
 	if err != nil {
 		return 0, newInternalError(err)
 	}
@@ -233,7 +233,7 @@ func (s TrainingService) AddTimedApproach(ctx context.Context, trainingId, exerc
 		return 0, errUnauthorized
 	}
 
-	id, err := s.tm.AddTimedApproach(ctx, user.TgID, trainingId, exerciseId, duration)
+	id, err := s.tm.AddTimedApproach(ctx, user.ID, trainingId, exerciseId, duration)
 	if err != nil {
 		return 0, newInternalError(err)
 	}
@@ -254,7 +254,7 @@ func (s TrainingService) UpdateApproach(ctx context.Context, approachId, reps in
 		return false, errUnauthorized
 	}
 
-	if err := s.tm.UpdateApproach(ctx, user.TgID, approachId, reps, weight); err != nil {
+	if err := s.tm.UpdateApproach(ctx, user.ID, approachId, reps, weight); err != nil {
 		return false, newInternalError(err)
 	}
 	return true, nil
@@ -273,7 +273,7 @@ func (s TrainingService) UpdateTimedApproach(ctx context.Context, approachId, du
 		return false, errUnauthorized
 	}
 
-	if err := s.tm.UpdateTimedApproach(ctx, user.TgID, approachId, duration); err != nil {
+	if err := s.tm.UpdateTimedApproach(ctx, user.ID, approachId, duration); err != nil {
 		return false, newInternalError(err)
 	}
 	return true, nil
@@ -292,7 +292,7 @@ func (s TrainingService) DeleteApproach(ctx context.Context, trainingId, approac
 		return false, errUnauthorized
 	}
 
-	if err := s.tm.DeleteApproach(ctx, user.TgID, trainingId, approachId); err != nil {
+	if err := s.tm.DeleteApproach(ctx, user.ID, trainingId, approachId); err != nil {
 		return false, newInternalError(err)
 	}
 	return true, nil
