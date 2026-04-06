@@ -4,6 +4,36 @@ import (
 	"workout/pkg/db"
 )
 
+//go:generate colgen
+
+type Category struct {
+	db.Category
+}
+
+func NewCategory(in *db.Category) *Category {
+	if in == nil {
+		return nil
+	}
+
+	return &Category{
+		Category: *in,
+	}
+}
+
+type Exercise struct {
+	db.Exercise
+}
+
+func NewExercise(in *db.Exercise) *Exercise {
+	if in == nil {
+		return nil
+	}
+
+	return &Exercise{
+		Exercise: *in,
+	}
+}
+
 type Approach struct {
 	db.Approach
 }
@@ -20,7 +50,8 @@ func NewApproach(in *db.Approach) *Approach {
 
 type Training struct {
 	db.Training
-	Date string
+	Date          string `json:"date"`
+	ExerciseCount int    `json:"exerciseCount"`
 }
 
 func NewTraining(in *db.Training) *Training {

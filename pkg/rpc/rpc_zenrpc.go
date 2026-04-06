@@ -142,83 +142,35 @@ func (ExerciseService) SMD() smd.ServiceInfo {
 				Returns: smd.JSONSchema{
 					Description: `List of categories`,
 					Type:        smd.Array,
-					TypeName:    "[]DbCategory",
+					TypeName:    "[]Category",
 					Items: map[string]string{
-						"$ref": "#/definitions/db.Category",
+						"$ref": "#/definitions/Category",
 					},
 					Definitions: map[string]smd.Definition{
-						"db.Category": {
+						"Category": {
 							Type: "object",
 							Properties: smd.PropertyList{
 								{
-									Name: "ID",
+									Name: "id",
 									Type: smd.Integer,
 								},
 								{
-									Name:     "ParentCategoryID",
+									Name:     "parentCategoryId",
 									Optional: true,
 									Type:     smd.Integer,
 								},
 								{
-									Name: "Title",
+									Name: "title",
 									Type: smd.String,
 								},
 								{
-									Name:     "SiteUserID",
+									Name:     "siteUserId",
 									Optional: true,
 									Type:     smd.Integer,
 								},
 								{
-									Name: "StatusID",
+									Name: "statusId",
 									Type: smd.Integer,
-								},
-								{
-									Name:     "ParentCategory",
-									Optional: true,
-									Ref:      "#/definitions/db.Category",
-									Type:     smd.Object,
-								},
-								{
-									Name:     "SiteUser",
-									Optional: true,
-									Ref:      "#/definitions/db.SiteUser",
-									Type:     smd.Object,
-								},
-							},
-						},
-						"db.SiteUser": {
-							Type: "object",
-							Properties: smd.PropertyList{
-								{
-									Name: "ID",
-									Type: smd.Integer,
-								},
-								{
-									Name: "TgID",
-									Type: smd.Integer,
-								},
-								{
-									Name: "CreatedAt",
-									Type: smd.String,
-								},
-								{
-									Name:     "LastActivityAt",
-									Optional: true,
-									Type:     smd.String,
-								},
-								{
-									Name:     "StatisticID",
-									Optional: true,
-									Type:     smd.Integer,
-								},
-								{
-									Name: "StatusID",
-									Type: smd.Integer,
-								},
-								{
-									Name:     "ApiKey",
-									Optional: true,
-									Type:     smd.String,
 								},
 							},
 						},
@@ -241,125 +193,38 @@ func (ExerciseService) SMD() smd.ServiceInfo {
 				Returns: smd.JSONSchema{
 					Description: `List of exercises`,
 					Type:        smd.Array,
-					TypeName:    "[]DbExercise",
+					TypeName:    "[]Exercise",
 					Items: map[string]string{
-						"$ref": "#/definitions/db.Exercise",
+						"$ref": "#/definitions/Exercise",
 					},
 					Definitions: map[string]smd.Definition{
-						"db.Exercise": {
+						"Exercise": {
 							Type: "object",
 							Properties: smd.PropertyList{
 								{
-									Name: "ID",
+									Name: "id",
 									Type: smd.Integer,
 								},
 								{
-									Name: "Title",
+									Name: "title",
 									Type: smd.String,
 								},
 								{
-									Name: "CategoryID",
+									Name: "categoryId",
 									Type: smd.Integer,
 								},
 								{
-									Name:     "SiteUserID",
+									Name:     "siteUserId",
 									Optional: true,
 									Type:     smd.Integer,
 								},
 								{
-									Name: "TypeID",
+									Name: "typeId",
 									Type: smd.Integer,
 								},
 								{
-									Name: "StatusID",
+									Name: "statusId",
 									Type: smd.Integer,
-								},
-								{
-									Name:     "Category",
-									Optional: true,
-									Ref:      "#/definitions/db.Category",
-									Type:     smd.Object,
-								},
-								{
-									Name:     "SiteUser",
-									Optional: true,
-									Ref:      "#/definitions/db.SiteUser",
-									Type:     smd.Object,
-								},
-							},
-						},
-						"db.Category": {
-							Type: "object",
-							Properties: smd.PropertyList{
-								{
-									Name: "ID",
-									Type: smd.Integer,
-								},
-								{
-									Name:     "ParentCategoryID",
-									Optional: true,
-									Type:     smd.Integer,
-								},
-								{
-									Name: "Title",
-									Type: smd.String,
-								},
-								{
-									Name:     "SiteUserID",
-									Optional: true,
-									Type:     smd.Integer,
-								},
-								{
-									Name: "StatusID",
-									Type: smd.Integer,
-								},
-								{
-									Name:     "ParentCategory",
-									Optional: true,
-									Ref:      "#/definitions/db.Category",
-									Type:     smd.Object,
-								},
-								{
-									Name:     "SiteUser",
-									Optional: true,
-									Ref:      "#/definitions/db.SiteUser",
-									Type:     smd.Object,
-								},
-							},
-						},
-						"db.SiteUser": {
-							Type: "object",
-							Properties: smd.PropertyList{
-								{
-									Name: "ID",
-									Type: smd.Integer,
-								},
-								{
-									Name: "TgID",
-									Type: smd.Integer,
-								},
-								{
-									Name: "CreatedAt",
-									Type: smd.String,
-								},
-								{
-									Name:     "LastActivityAt",
-									Optional: true,
-									Type:     smd.String,
-								},
-								{
-									Name:     "StatisticID",
-									Optional: true,
-									Type:     smd.Integer,
-								},
-								{
-									Name: "StatusID",
-									Type: smd.Integer,
-								},
-								{
-									Name:     "ApiKey",
-									Optional: true,
-									Type:     smd.String,
 								},
 							},
 						},
@@ -545,9 +410,54 @@ func (TrainingService) SMD() smd.ServiceInfo {
 				},
 				Returns: smd.JSONSchema{
 					Description: `List of trainings`,
-					Type:        smd.Object,
-					TypeName:    "WorkoutTrainings",
-					Properties:  smd.PropertyList{},
+					Type:        smd.Array,
+					TypeName:    "[]Training",
+					Items: map[string]string{
+						"$ref": "#/definitions/Training",
+					},
+					Definitions: map[string]smd.Definition{
+						"Training": {
+							Type: "object",
+							Properties: smd.PropertyList{
+								{
+									Name: "id",
+									Type: smd.Integer,
+								},
+								{
+									Name: "siteUserId",
+									Type: smd.Integer,
+								},
+								{
+									Name: "approachIds",
+									Type: smd.Array,
+									Items: map[string]string{
+										"type": smd.Integer,
+									},
+								},
+								{
+									Name: "startedAt",
+									Type: smd.String,
+								},
+								{
+									Name:     "endedAt",
+									Optional: true,
+									Type:     smd.String,
+								},
+								{
+									Name: "statusId",
+									Type: smd.Integer,
+								},
+								{
+									Name: "date",
+									Type: smd.String,
+								},
+								{
+									Name: "exerciseCount",
+									Type: smd.Integer,
+								},
+							},
+						},
+					},
 				},
 				Errors: map[int]string{
 					401: "Unauthorized",
@@ -570,42 +480,40 @@ func (TrainingService) SMD() smd.ServiceInfo {
 					TypeName:    "TrainingDetail",
 					Properties: smd.PropertyList{
 						{
-							Name: "ID",
+							Name: "id",
 							Type: smd.Integer,
 						},
 						{
-							Name: "SiteUserID",
+							Name: "siteUserId",
 							Type: smd.Integer,
 						},
 						{
-							Name: "ApproachIDs",
+							Name: "approachIds",
 							Type: smd.Array,
 							Items: map[string]string{
 								"type": smd.Integer,
 							},
 						},
 						{
-							Name: "StartedAt",
+							Name: "startedAt",
 							Type: smd.String,
 						},
 						{
-							Name:     "EndedAt",
+							Name:     "endedAt",
 							Optional: true,
 							Type:     smd.String,
 						},
 						{
-							Name: "StatusID",
+							Name: "statusId",
 							Type: smd.Integer,
 						},
 						{
-							Name:     "SiteUser",
-							Optional: true,
-							Ref:      "#/definitions/db.SiteUser",
-							Type:     smd.Object,
+							Name: "date",
+							Type: smd.String,
 						},
 						{
-							Name: "Date",
-							Type: smd.String,
+							Name: "exerciseCount",
+							Type: smd.Integer,
 						},
 						{
 							Name: "exercises",
@@ -616,141 +524,90 @@ func (TrainingService) SMD() smd.ServiceInfo {
 						},
 					},
 					Definitions: map[string]smd.Definition{
-						"db.SiteUser": {
-							Type: "object",
-							Properties: smd.PropertyList{
-								{
-									Name: "ID",
-									Type: smd.Integer,
-								},
-								{
-									Name: "TgID",
-									Type: smd.Integer,
-								},
-								{
-									Name: "CreatedAt",
-									Type: smd.String,
-								},
-								{
-									Name:     "LastActivityAt",
-									Optional: true,
-									Type:     smd.String,
-								},
-								{
-									Name:     "StatisticID",
-									Optional: true,
-									Type:     smd.Integer,
-								},
-								{
-									Name: "StatusID",
-									Type: smd.Integer,
-								},
-								{
-									Name:     "ApiKey",
-									Optional: true,
-									Type:     smd.String,
-								},
-							},
-						},
 						"ExerciseWithApproaches": {
 							Type: "object",
 							Properties: smd.PropertyList{
 								{
 									Name: "exercise",
-									Ref:  "#/definitions/db.Exercise",
+									Ref:  "#/definitions/Exercise",
 									Type: smd.Object,
 								},
 								{
 									Name: "approaches",
-									Ref:  "#/definitions/workout.Approaches",
-									Type: smd.Object,
+									Type: smd.Array,
+									Items: map[string]string{
+										"$ref": "#/definitions/Approach",
+									},
 								},
 							},
 						},
-						"db.Exercise": {
+						"Exercise": {
 							Type: "object",
 							Properties: smd.PropertyList{
 								{
-									Name: "ID",
+									Name: "id",
 									Type: smd.Integer,
 								},
 								{
-									Name: "Title",
+									Name: "title",
 									Type: smd.String,
 								},
 								{
-									Name: "CategoryID",
+									Name: "categoryId",
 									Type: smd.Integer,
 								},
 								{
-									Name:     "SiteUserID",
+									Name:     "siteUserId",
 									Optional: true,
 									Type:     smd.Integer,
 								},
 								{
-									Name: "TypeID",
+									Name: "typeId",
 									Type: smd.Integer,
 								},
 								{
-									Name: "StatusID",
+									Name: "statusId",
 									Type: smd.Integer,
-								},
-								{
-									Name:     "Category",
-									Optional: true,
-									Ref:      "#/definitions/db.Category",
-									Type:     smd.Object,
-								},
-								{
-									Name:     "SiteUser",
-									Optional: true,
-									Ref:      "#/definitions/db.SiteUser",
-									Type:     smd.Object,
 								},
 							},
 						},
-						"db.Category": {
+						"Approach": {
 							Type: "object",
 							Properties: smd.PropertyList{
 								{
-									Name: "ID",
+									Name: "id",
 									Type: smd.Integer,
 								},
 								{
-									Name:     "ParentCategoryID",
+									Name:     "exerciseId",
 									Optional: true,
 									Type:     smd.Integer,
 								},
 								{
-									Name: "Title",
-									Type: smd.String,
-								},
-								{
-									Name:     "SiteUserID",
+									Name:     "reps",
 									Optional: true,
 									Type:     smd.Integer,
 								},
 								{
-									Name: "StatusID",
+									Name:     "weight",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name:     "duration",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name:     "createdAt",
+									Optional: true,
+									Type:     smd.String,
+								},
+								{
+									Name: "statusId",
 									Type: smd.Integer,
-								},
-								{
-									Name:     "ParentCategory",
-									Optional: true,
-									Ref:      "#/definitions/db.Category",
-									Type:     smd.Object,
-								},
-								{
-									Name:     "SiteUser",
-									Optional: true,
-									Ref:      "#/definitions/db.SiteUser",
-									Type:     smd.Object,
 								},
 							},
-						},
-						"workout.Approaches": {
-							Type:       "object",
-							Properties: smd.PropertyList{},
 						},
 					},
 				},
@@ -773,83 +630,43 @@ func (TrainingService) SMD() smd.ServiceInfo {
 					Description: `Created training`,
 					Optional:    true,
 					Type:        smd.Object,
-					TypeName:    "WorkoutTraining",
+					TypeName:    "Training",
 					Properties: smd.PropertyList{
 						{
-							Name: "ID",
+							Name: "id",
 							Type: smd.Integer,
 						},
 						{
-							Name: "SiteUserID",
+							Name: "siteUserId",
 							Type: smd.Integer,
 						},
 						{
-							Name: "ApproachIDs",
+							Name: "approachIds",
 							Type: smd.Array,
 							Items: map[string]string{
 								"type": smd.Integer,
 							},
 						},
 						{
-							Name: "StartedAt",
+							Name: "startedAt",
 							Type: smd.String,
 						},
 						{
-							Name:     "EndedAt",
+							Name:     "endedAt",
 							Optional: true,
 							Type:     smd.String,
 						},
 						{
-							Name: "StatusID",
+							Name: "statusId",
 							Type: smd.Integer,
 						},
 						{
-							Name:     "SiteUser",
-							Optional: true,
-							Ref:      "#/definitions/db.SiteUser",
-							Type:     smd.Object,
-						},
-						{
-							Name: "Date",
+							Name: "date",
 							Type: smd.String,
 						},
-					},
-					Definitions: map[string]smd.Definition{
-						"db.SiteUser": {
-							Type: "object",
-							Properties: smd.PropertyList{
-								{
-									Name: "ID",
-									Type: smd.Integer,
-								},
-								{
-									Name: "TgID",
-									Type: smd.Integer,
-								},
-								{
-									Name: "CreatedAt",
-									Type: smd.String,
-								},
-								{
-									Name:     "LastActivityAt",
-									Optional: true,
-									Type:     smd.String,
-								},
-								{
-									Name:     "StatisticID",
-									Optional: true,
-									Type:     smd.Integer,
-								},
-								{
-									Name: "StatusID",
-									Type: smd.Integer,
-								},
-								{
-									Name:     "ApiKey",
-									Optional: true,
-									Type:     smd.String,
-								},
-							},
+						{
+							Name: "exerciseCount",
+							Type: smd.Integer,
 						},
 					},
 				},
@@ -889,125 +706,38 @@ func (TrainingService) SMD() smd.ServiceInfo {
 				Returns: smd.JSONSchema{
 					Description: `List of exercises`,
 					Type:        smd.Array,
-					TypeName:    "[]DbExercise",
+					TypeName:    "[]Exercise",
 					Items: map[string]string{
-						"$ref": "#/definitions/db.Exercise",
+						"$ref": "#/definitions/Exercise",
 					},
 					Definitions: map[string]smd.Definition{
-						"db.Exercise": {
+						"Exercise": {
 							Type: "object",
 							Properties: smd.PropertyList{
 								{
-									Name: "ID",
+									Name: "id",
 									Type: smd.Integer,
 								},
 								{
-									Name: "Title",
+									Name: "title",
 									Type: smd.String,
 								},
 								{
-									Name: "CategoryID",
+									Name: "categoryId",
 									Type: smd.Integer,
 								},
 								{
-									Name:     "SiteUserID",
+									Name:     "siteUserId",
 									Optional: true,
 									Type:     smd.Integer,
 								},
 								{
-									Name: "TypeID",
+									Name: "typeId",
 									Type: smd.Integer,
 								},
 								{
-									Name: "StatusID",
+									Name: "statusId",
 									Type: smd.Integer,
-								},
-								{
-									Name:     "Category",
-									Optional: true,
-									Ref:      "#/definitions/db.Category",
-									Type:     smd.Object,
-								},
-								{
-									Name:     "SiteUser",
-									Optional: true,
-									Ref:      "#/definitions/db.SiteUser",
-									Type:     smd.Object,
-								},
-							},
-						},
-						"db.Category": {
-							Type: "object",
-							Properties: smd.PropertyList{
-								{
-									Name: "ID",
-									Type: smd.Integer,
-								},
-								{
-									Name:     "ParentCategoryID",
-									Optional: true,
-									Type:     smd.Integer,
-								},
-								{
-									Name: "Title",
-									Type: smd.String,
-								},
-								{
-									Name:     "SiteUserID",
-									Optional: true,
-									Type:     smd.Integer,
-								},
-								{
-									Name: "StatusID",
-									Type: smd.Integer,
-								},
-								{
-									Name:     "ParentCategory",
-									Optional: true,
-									Ref:      "#/definitions/db.Category",
-									Type:     smd.Object,
-								},
-								{
-									Name:     "SiteUser",
-									Optional: true,
-									Ref:      "#/definitions/db.SiteUser",
-									Type:     smd.Object,
-								},
-							},
-						},
-						"db.SiteUser": {
-							Type: "object",
-							Properties: smd.PropertyList{
-								{
-									Name: "ID",
-									Type: smd.Integer,
-								},
-								{
-									Name: "TgID",
-									Type: smd.Integer,
-								},
-								{
-									Name: "CreatedAt",
-									Type: smd.String,
-								},
-								{
-									Name:     "LastActivityAt",
-									Optional: true,
-									Type:     smd.String,
-								},
-								{
-									Name:     "StatisticID",
-									Optional: true,
-									Type:     smd.Integer,
-								},
-								{
-									Name: "StatusID",
-									Type: smd.Integer,
-								},
-								{
-									Name:     "ApiKey",
-									Optional: true,
-									Type:     smd.String,
 								},
 							},
 						},
@@ -1034,9 +764,51 @@ func (TrainingService) SMD() smd.ServiceInfo {
 				},
 				Returns: smd.JSONSchema{
 					Description: `List of approaches`,
-					Type:        smd.Object,
-					TypeName:    "WorkoutApproaches",
-					Properties:  smd.PropertyList{},
+					Type:        smd.Array,
+					TypeName:    "[]Approach",
+					Items: map[string]string{
+						"$ref": "#/definitions/Approach",
+					},
+					Definitions: map[string]smd.Definition{
+						"Approach": {
+							Type: "object",
+							Properties: smd.PropertyList{
+								{
+									Name: "id",
+									Type: smd.Integer,
+								},
+								{
+									Name:     "exerciseId",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name:     "reps",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name:     "weight",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name:     "duration",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name:     "createdAt",
+									Optional: true,
+									Type:     smd.String,
+								},
+								{
+									Name: "statusId",
+									Type: smd.Integer,
+								},
+							},
+						},
+					},
 				},
 				Errors: map[int]string{
 					401: "Unauthorized",

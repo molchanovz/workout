@@ -25,6 +25,46 @@ func (ll Approaches) Index() map[int]Approach {
 
 func NewApproaches(in []db.Approach) Approaches { return MapP(in, NewApproach) }
 
+type Categories []Category
+
+func (ll Categories) IDs() []int {
+	r := make([]int, len(ll))
+	for i := range ll {
+		r[i] = ll[i].ID
+	}
+	return r
+}
+
+func (ll Categories) Index() map[int]Category {
+	r := make(map[int]Category, len(ll))
+	for i := range ll {
+		r[ll[i].ID] = ll[i]
+	}
+	return r
+}
+
+func NewCategories(in []db.Category) Categories { return MapP(in, NewCategory) }
+
+type Exercises []Exercise
+
+func (ll Exercises) IDs() []int {
+	r := make([]int, len(ll))
+	for i := range ll {
+		r[i] = ll[i].ID
+	}
+	return r
+}
+
+func (ll Exercises) Index() map[int]Exercise {
+	r := make(map[int]Exercise, len(ll))
+	for i := range ll {
+		r[ll[i].ID] = ll[i]
+	}
+	return r
+}
+
+func NewExercises(in []db.Exercise) Exercises { return MapP(in, NewExercise) }
+
 type SiteUsers []SiteUser
 
 func (ll SiteUsers) IDs() []int {

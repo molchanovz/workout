@@ -63,7 +63,60 @@ func (tm Manager) TrainingListByRange(ctx context.Context, userID int, from, to 
 		&db.TrainingSearch{SiteUserID: &userID, StatusID: workout.Ptr(db.StatusEnabled), StartedAtGrater: from, StartedAtLess: to},
 		db.PagerNoLimit,
 	)
-	return workout.NewTrainings(trainings), err
+	if err != nil {
+		return nil, err
+	}
+
+	result := workout.NewTrainings(trainings)
+	if err := tm.fillExerciseCounts(ctx, trainings, result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// fillExerciseCounts populates ExerciseCount for each training using a single batch approach query.
+func (tm Manager) fillExerciseCounts(ctx context.Context, dbTrainings []db.Training, trainings workout.Trainings) error {
+	// build approachID -> training index map
+	approachToIdx := make(map[int]int)
+	var allApproachIDs []int
+	for i, t := range dbTrainings {
+		for _, aid := range t.ApproachIDs {
+			approachToIdx[aid] = i
+			allApproachIDs = append(allApproachIDs, aid)
+		}
+	}
+	if len(allApproachIDs) == 0 {
+		return nil
+	}
+
+	approaches, err := tm.tr.ApproachesByFilters(ctx,
+		&db.ApproachSearch{IDs: allApproachIDs, StatusID: workout.Ptr(db.StatusEnabled)},
+		db.PagerNoLimit,
+	)
+	if err != nil {
+		return err
+	}
+
+	// count unique exercise IDs per training
+	seenExercises := make(map[int]map[int]bool)
+	for _, a := range approaches {
+		if a.ExerciseID == nil {
+			continue
+		}
+		idx, ok := approachToIdx[a.ID]
+		if !ok {
+			continue
+		}
+		if seenExercises[idx] == nil {
+			seenExercises[idx] = make(map[int]bool)
+		}
+		seenExercises[idx][*a.ExerciseID] = true
+	}
+
+	for idx, exercises := range seenExercises {
+		trainings[idx].ExerciseCount = len(exercises)
+	}
+	return nil
 }
 
 // TrainingByID returns a single training by id.
@@ -78,7 +131,7 @@ func (tm Manager) TrainingByID(ctx context.Context, userID, trainingId int) (*wo
 
 // ExerciseList returns unique exercises present in a training, in order of first appearance.
 // TODO поменять для бота
-func (tm Manager) ExerciseList(ctx context.Context, userID, trainingId int) ([]db.Exercise, error) {
+func (tm Manager) ExerciseList(ctx context.Context, userID, trainingId int) ([]workout.Exercise, error) {
 	training, err := tm.tr.OneTraining(ctx, &db.TrainingSearch{ID: &trainingId, SiteUserID: &userID, StatusID: workout.Ptr(db.StatusEnabled)})
 	if err != nil {
 		return nil, err
@@ -104,7 +157,7 @@ func (tm Manager) ExerciseList(ctx context.Context, userID, trainingId int) ([]d
 			result = append(result, *a.Exercise)
 		}
 	}
-	return result, nil
+	return workout.NewExercises(result), nil
 }
 
 // ApproachList returns approaches for a specific exercise within a training.

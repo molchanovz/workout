@@ -31,7 +31,7 @@ func NewExerciseService(logger embedlog.Logger, dbo db.DB) *ExerciseService {
 //zenrpc:return List of categories
 //zenrpc:401 Unauthorized
 //zenrpc:500 Internal Error
-func (s ExerciseService) CategoryList(ctx context.Context, parentId *int) ([]db.Category, error) {
+func (s ExerciseService) CategoryList(ctx context.Context, parentId *int) ([]Category, error) {
 	if SiteUserFromContext(ctx) == nil {
 		return nil, zenrpc.NewStringError(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized))
 	}
@@ -42,7 +42,12 @@ func (s ExerciseService) CategoryList(ctx context.Context, parentId *int) ([]db.
 		search.With(`t."parentCategoryId" IS NULL`)
 	}
 
-	return s.tr.CategoriesByFilters(ctx, search, db.PagerNoLimit)
+	list, err := s.tr.CategoriesByFilters(ctx, search, db.PagerNoLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewCategories(workout.NewCategories(list)), nil
 }
 
 // List returns exercises for a category (global + personal for the current user).
@@ -51,7 +56,7 @@ func (s ExerciseService) CategoryList(ctx context.Context, parentId *int) ([]db.
 //zenrpc:return List of exercises
 //zenrpc:401 Unauthorized
 //zenrpc:500 Internal Error
-func (s ExerciseService) List(ctx context.Context, categoryId int) ([]db.Exercise, error) {
+func (s ExerciseService) List(ctx context.Context, categoryId int) ([]Exercise, error) {
 	user := SiteUserFromContext(ctx)
 	if user == nil {
 		return nil, zenrpc.NewStringError(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized))
@@ -61,7 +66,12 @@ func (s ExerciseService) List(ctx context.Context, categoryId int) ([]db.Exercis
 	search := &db.ExerciseSearch{CategoryID: &categoryId, StatusID: &enabled}
 	search.With(`(t."siteUserId" IS NULL OR t."siteUserId" = ?)`, user.ID)
 
-	return s.tr.ExercisesByFilters(ctx, search, db.PagerNoLimit)
+	list, err := s.tr.ExercisesByFilters(ctx, search, db.PagerNoLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewExercises(workout.NewExercises(list)), nil
 }
 
 // AddCategory creates a new category.

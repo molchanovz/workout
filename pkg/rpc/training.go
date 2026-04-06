@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"workout/pkg/db"
-	"workout/pkg/workout"
 	"workout/pkg/workout/training"
 
 	"github.com/vmkteam/embedlog"
@@ -34,13 +32,13 @@ func NewTrainingService(logger embedlog.Logger, tm *training.Manager) *TrainingS
 
 // ExerciseWithApproaches holds an exercise and its approaches in a training.
 type ExerciseWithApproaches struct {
-	Exercise   db.Exercise        `json:"exercise"`
-	Approaches workout.Approaches `json:"approaches"`
+	Exercise   Exercise   `json:"exercise"`
+	Approaches []Approach `json:"approaches"`
 }
 
 // TrainingDetail is a full training with exercises and approaches.
 type TrainingDetail struct {
-	workout.Training
+	Training
 	Exercises []ExerciseWithApproaches `json:"exercises"`
 }
 
@@ -52,7 +50,7 @@ type TrainingDetail struct {
 //zenrpc:return List of trainings
 //zenrpc:401 Unauthorized
 //zenrpc:500 Internal Error
-func (s TrainingService) List(ctx context.Context, date, from, to *string) (workout.Trainings, error) {
+func (s TrainingService) List(ctx context.Context, date, from, to *string) ([]Training, error) {
 	user := SiteUserFromContext(ctx)
 	if user == nil {
 		return nil, errUnauthorized
@@ -84,7 +82,12 @@ func (s TrainingService) List(ctx context.Context, date, from, to *string) (work
 		}
 	}
 
-	return s.tm.TrainingListByRange(ctx, user.ID, fromT, toT)
+	list, err := s.tm.TrainingListByRange(ctx, user.ID, fromT, toT)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewTrainings(list), nil
 }
 
 // Get returns a full training with exercises and approaches.
@@ -113,15 +116,18 @@ func (s TrainingService) Get(ctx context.Context, id int) (*TrainingDetail, erro
 		return nil, newInternalError(err)
 	}
 
-	detail := &TrainingDetail{Training: *t}
-	for _, ex := range exercises {
+	newExercises := NewExercises(exercises)
+
+	detail := &TrainingDetail{Training: *NewTraining(t)}
+	for _, ex := range newExercises {
 		approaches, err := s.tm.ApproachList(ctx, user.ID, id, ex.ID)
 		if err != nil {
 			return nil, newInternalError(err)
 		}
+
 		detail.Exercises = append(detail.Exercises, ExerciseWithApproaches{
 			Exercise:   ex,
-			Approaches: approaches,
+			Approaches: NewApproaches(approaches),
 		})
 	}
 
@@ -134,7 +140,7 @@ func (s TrainingService) Get(ctx context.Context, id int) (*TrainingDetail, erro
 //zenrpc:return Created training
 //zenrpc:401 Unauthorized
 //zenrpc:500 Internal Error
-func (s TrainingService) New(ctx context.Context, date string) (*workout.Training, error) {
+func (s TrainingService) New(ctx context.Context, date string) (*Training, error) {
 	user := SiteUserFromContext(ctx)
 	if user == nil {
 		return nil, errUnauthorized
@@ -145,7 +151,12 @@ func (s TrainingService) New(ctx context.Context, date string) (*workout.Trainin
 		return nil, zenrpc.NewStringError(http.StatusBadRequest, "invalid date format")
 	}
 
-	return s.tm.NewTrainingForUser(ctx, user.ID, t)
+	tr, err := s.tm.NewTrainingForUser(ctx, user.ID, t)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewTraining(tr), nil
 }
 
 // Delete soft-deletes a training and all its approaches.
@@ -172,13 +183,18 @@ func (s TrainingService) Delete(ctx context.Context, id int) (bool, error) {
 //zenrpc:return List of exercises
 //zenrpc:401 Unauthorized
 //zenrpc:500 Internal Error
-func (s TrainingService) ExerciseList(ctx context.Context, trainingId int) ([]db.Exercise, error) {
+func (s TrainingService) ExerciseList(ctx context.Context, trainingId int) ([]Exercise, error) {
 	user := SiteUserFromContext(ctx)
 	if user == nil {
 		return nil, errUnauthorized
 	}
 
-	return s.tm.ExerciseList(ctx, user.ID, trainingId)
+	_, err := s.tm.ExerciseList(ctx, user.ID, trainingId)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
 }
 
 // ApproachList returns approaches for an exercise in a training.
@@ -188,13 +204,18 @@ func (s TrainingService) ExerciseList(ctx context.Context, trainingId int) ([]db
 //zenrpc:return List of approaches
 //zenrpc:401 Unauthorized
 //zenrpc:500 Internal Error
-func (s TrainingService) ApproachList(ctx context.Context, trainingId, exerciseId int) (workout.Approaches, error) {
+func (s TrainingService) ApproachList(ctx context.Context, trainingId, exerciseId int) ([]Approach, error) {
 	user := SiteUserFromContext(ctx)
 	if user == nil {
 		return nil, errUnauthorized
 	}
 
-	return s.tm.ApproachList(ctx, user.ID, trainingId, exerciseId)
+	list, err := s.tm.ApproachList(ctx, user.ID, trainingId, exerciseId)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewApproaches(list), nil
 }
 
 // AddApproach adds a strength approach (reps + weight) to a training.

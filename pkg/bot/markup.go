@@ -47,7 +47,7 @@ func trainingListMarkup(trainings workout.Trainings, date string) models.InlineK
 
 // exerciseListMarkup shows unique exercises in a training.
 // format: exerciseList_date_TID
-func exerciseListMarkup(exercises []db.Exercise, date string, trainingId int) models.InlineKeyboardMarkup {
+func exerciseListMarkup(exercises []workout.Exercise, date string, trainingId int) models.InlineKeyboardMarkup {
 	var allButtons [][]models.InlineKeyboardButton
 
 	for _, e := range exercises {
