@@ -3,7 +3,6 @@ package rpc
 import (
 	"context"
 	"net/http"
-
 	"workout/pkg/db"
 	"workout/pkg/workout"
 
@@ -124,4 +123,22 @@ func (s ExerciseService) Add(ctx context.Context, title string, categoryId, type
 		return 0, newInternalError(err)
 	}
 	return ex.ID, nil
+}
+
+func (s ExerciseService) Search(ctx context.Context, title string) ([]Exercise, error) {
+	user := SiteUserFromContext(ctx)
+	if user == nil {
+		return nil, zenrpc.NewStringError(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized))
+	}
+
+	enabled := db.StatusEnabled
+	search := &db.ExerciseSearch{StatusID: &enabled}
+	search.With(`(t."siteUserId" IS NULL OR t."siteUserId" = ?)`, user.ID)
+	search.With(`(lower_ru(t."title") LIKE lower_ru(?))`, "%"+title+"%")
+	list, err := s.tr.ExercisesByFilters(ctx, search, db.PagerNoLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewExercises(workout.NewExercises(list)), nil
 }

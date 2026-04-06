@@ -12,17 +12,18 @@ import (
 
 var RPC = struct {
 	AuthService     struct{ TelegramLogin string }
-	ExerciseService struct{ CategoryList, List, AddCategory, Add string }
+	ExerciseService struct{ CategoryList, List, AddCategory, Add, Search string }
 	TrainingService struct{ List, Get, New, Delete, ExerciseList, ApproachList, AddApproach, AddTimedApproach, UpdateApproach, UpdateTimedApproach, DeleteApproach string }
 }{
 	AuthService: struct{ TelegramLogin string }{
 		TelegramLogin: "telegramlogin",
 	},
-	ExerciseService: struct{ CategoryList, List, AddCategory, Add string }{
+	ExerciseService: struct{ CategoryList, List, AddCategory, Add, Search string }{
 		CategoryList: "categorylist",
 		List:         "list",
 		AddCategory:  "addcategory",
 		Add:          "add",
+		Search:       "search",
 	},
 	TrainingService: struct{ List, Get, New, Delete, ExerciseList, ApproachList, AddApproach, AddTimedApproach, UpdateApproach, UpdateTimedApproach, DeleteApproach string }{
 		List:                "list",
@@ -287,6 +288,53 @@ func (ExerciseService) SMD() smd.ServiceInfo {
 					500: "Internal Error",
 				},
 			},
+			"Search": {
+				Parameters: []smd.JSONSchema{
+					{
+						Name: "title",
+						Type: smd.String,
+					},
+				},
+				Returns: smd.JSONSchema{
+					Type:     smd.Array,
+					TypeName: "[]Exercise",
+					Items: map[string]string{
+						"$ref": "#/definitions/Exercise",
+					},
+					Definitions: map[string]smd.Definition{
+						"Exercise": {
+							Type: "object",
+							Properties: smd.PropertyList{
+								{
+									Name: "id",
+									Type: smd.Integer,
+								},
+								{
+									Name: "title",
+									Type: smd.String,
+								},
+								{
+									Name: "categoryId",
+									Type: smd.Integer,
+								},
+								{
+									Name:     "siteUserId",
+									Optional: true,
+									Type:     smd.Integer,
+								},
+								{
+									Name: "typeId",
+									Type: smd.Integer,
+								},
+								{
+									Name: "statusId",
+									Type: smd.Integer,
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -375,6 +423,25 @@ func (s ExerciseService) Invoke(ctx context.Context, method string, params json.
 		}
 
 		resp.Set(s.Add(ctx, args.Title, args.CategoryId, args.TypeId))
+
+	case RPC.ExerciseService.Search:
+		var args = struct {
+			Title string `json:"title"`
+		}{}
+
+		if zenrpc.IsArray(params) {
+			if params, err = zenrpc.ConvertToObject([]string{"title"}, params); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		if len(params) > 0 {
+			if err := json.Unmarshal(params, &args); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		resp.Set(s.Search(ctx, args.Title))
 
 	default:
 		resp = zenrpc.NewResponseError(nil, zenrpc.MethodNotFound, "", nil)
