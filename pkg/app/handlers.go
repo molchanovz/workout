@@ -85,6 +85,7 @@ func (a *App) registerAPIHandlers() {
 		DB:              a.db,
 		Logger:          a.Logger,
 		TrainingManager: a.trainingManager,
+		StatsManager:    a.statsManager,
 		BotToken:        a.cfg.Bot.Token,
 	}
 

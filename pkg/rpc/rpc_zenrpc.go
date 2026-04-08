@@ -13,6 +13,7 @@ import (
 var RPC = struct {
 	AuthService     struct{ TelegramLogin string }
 	ExerciseService struct{ CategoryList, List, AddCategory, Add, Search string }
+	StatsService    struct{ PersonalRecords, WeeklyVolume, Streak string }
 	TrainingService struct{ List, Get, New, Delete, ExerciseList, ApproachList, AddApproach, AddTimedApproach, UpdateApproach, UpdateTimedApproach, DeleteApproach string }
 }{
 	AuthService: struct{ TelegramLogin string }{
@@ -24,6 +25,11 @@ var RPC = struct {
 		AddCategory:  "addcategory",
 		Add:          "add",
 		Search:       "search",
+	},
+	StatsService: struct{ PersonalRecords, WeeklyVolume, Streak string }{
+		PersonalRecords: "personalrecords",
+		WeeklyVolume:    "weeklyvolume",
+		Streak:          "streak",
 	},
 	TrainingService: struct{ List, Get, New, Delete, ExerciseList, ApproachList, AddApproach, AddTimedApproach, UpdateApproach, UpdateTimedApproach, DeleteApproach string }{
 		List:                "list",
@@ -442,6 +448,165 @@ func (s ExerciseService) Invoke(ctx context.Context, method string, params json.
 		}
 
 		resp.Set(s.Search(ctx, args.Title))
+
+	default:
+		resp = zenrpc.NewResponseError(nil, zenrpc.MethodNotFound, "", nil)
+	}
+
+	return resp
+}
+
+func (StatsService) SMD() smd.ServiceInfo {
+	return smd.ServiceInfo{
+		Methods: map[string]smd.Service{
+			"PersonalRecords": {
+				Description: `PersonalRecords returns per-exercise personal records for the current user.`,
+				Parameters:  []smd.JSONSchema{},
+				Returns: smd.JSONSchema{
+					Description: `Personal records per exercise`,
+					Type:        smd.Array,
+					TypeName:    "[]WorkoutPREntry",
+					Items: map[string]string{
+						"$ref": "#/definitions/workout.PREntry",
+					},
+					Definitions: map[string]smd.Definition{
+						"workout.PREntry": {
+							Type: "object",
+							Properties: smd.PropertyList{
+								{
+									Name: "exerciseId",
+									Type: smd.Integer,
+								},
+								{
+									Name: "exerciseTitle",
+									Type: smd.String,
+								},
+								{
+									Name: "maxWeight",
+									Type: smd.Integer,
+								},
+								{
+									Name: "reps",
+									Type: smd.Integer,
+								},
+								{
+									Name: "est1rm",
+									Type: smd.Float,
+								},
+								{
+									Name: "achievedAt",
+									Type: smd.String,
+								},
+							},
+						},
+					},
+				},
+				Errors: map[int]string{
+					401: "Unauthorized",
+					500: "Internal Error",
+				},
+			},
+			"WeeklyVolume": {
+				Description: `WeeklyVolume returns tonnage per ISO week for the last N weeks.`,
+				Parameters: []smd.JSONSchema{
+					{
+						Name:        "weeks",
+						Description: `Number of weeks to return (default 12)`,
+						Type:        smd.Integer,
+					},
+				},
+				Returns: smd.JSONSchema{
+					Description: `Weekly volume data`,
+					Type:        smd.Array,
+					TypeName:    "[]WorkoutWeekVolume",
+					Items: map[string]string{
+						"$ref": "#/definitions/workout.WeekVolume",
+					},
+					Definitions: map[string]smd.Definition{
+						"workout.WeekVolume": {
+							Type: "object",
+							Properties: smd.PropertyList{
+								{
+									Name:        "week",
+									Description: `Monday date "YYYY-MM-DD"`,
+									Type:        smd.String,
+								},
+								{
+									Name:        "volume",
+									Description: `Σ(reps × weight)`,
+									Type:        smd.Float,
+								},
+							},
+						},
+					},
+				},
+				Errors: map[int]string{
+					401: "Unauthorized",
+					500: "Internal Error",
+				},
+			},
+			"Streak": {
+				Description: `Streak returns training streak and period counts for the current user.`,
+				Parameters:  []smd.JSONSchema{},
+				Returns: smd.JSONSchema{
+					Description: `Streak statistics`,
+					Optional:    true,
+					Type:        smd.Object,
+					TypeName:    "WorkoutStreakStats",
+					Properties: smd.PropertyList{
+						{
+							Name: "currentStreak",
+							Type: smd.Integer,
+						},
+						{
+							Name: "monthCount",
+							Type: smd.Integer,
+						},
+						{
+							Name: "yearCount",
+							Type: smd.Integer,
+						},
+					},
+				},
+				Errors: map[int]string{
+					401: "Unauthorized",
+					500: "Internal Error",
+				},
+			},
+		},
+	}
+}
+
+// Invoke is as generated code from zenrpc cmd
+func (s StatsService) Invoke(ctx context.Context, method string, params json.RawMessage) zenrpc.Response {
+	resp := zenrpc.Response{}
+	var err error
+
+	switch method {
+	case RPC.StatsService.PersonalRecords:
+		resp.Set(s.PersonalRecords(ctx))
+
+	case RPC.StatsService.WeeklyVolume:
+		var args = struct {
+			Weeks int `json:"weeks"`
+		}{}
+
+		if zenrpc.IsArray(params) {
+			if params, err = zenrpc.ConvertToObject([]string{"weeks"}, params); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		if len(params) > 0 {
+			if err := json.Unmarshal(params, &args); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		resp.Set(s.WeeklyVolume(ctx, args.Weeks))
+
+	case RPC.StatsService.Streak:
+		resp.Set(s.Streak(ctx))
 
 	default:
 		resp = zenrpc.NewResponseError(nil, zenrpc.MethodNotFound, "", nil)

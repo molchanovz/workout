@@ -7,11 +7,12 @@ import (
 	"net/http"
 	"net/url"
 	"time"
-	"workout/pkg/workout/training"
 
 	"workout/pkg/bot"
 	"workout/pkg/db"
 	"workout/pkg/vt"
+	"workout/pkg/workout/statistic"
+	"workout/pkg/workout/training"
 
 	"github.com/go-pg/pg/v10"
 	botlib "github.com/go-telegram/bot"
@@ -59,6 +60,7 @@ type App struct {
 	b               *botlib.Bot
 	bm              *bot.Manager
 	trainingManager *training.Manager
+	statsManager    *statistic.StatsManager
 }
 
 func New(appName string, sl embedlog.Logger, cfg Config, db db.DB, dbc *pg.DB) *App {
@@ -79,6 +81,7 @@ func New(appName string, sl embedlog.Logger, cfg Config, db db.DB, dbc *pg.DB) *
 
 	a.bm = bot.NewManager(a.db, a.Logger)
 	a.trainingManager = training.NewTrainingManager(a.db, a.Logger)
+	a.statsManager = statistic.NewStatsManager(a.db, a.Logger)
 
 	opts := []botlib.Option{botlib.WithDefaultHandler(a.bm.DefaultHandler)}
 	if cfg.Bot.ProxyURL != "" {

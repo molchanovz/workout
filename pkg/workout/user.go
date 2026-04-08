@@ -2,9 +2,11 @@ package workout
 
 import (
 	"context"
-	"github.com/vmkteam/embedlog"
 	"time"
+
 	"workout/pkg/db"
+
+	"github.com/vmkteam/embedlog"
 )
 
 type SiteUserManager struct {

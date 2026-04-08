@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 	"net/http"
+
 	"workout/pkg/db"
 	"workout/pkg/workout"
 

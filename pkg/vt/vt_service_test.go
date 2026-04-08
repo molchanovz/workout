@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/smartystreets/goconvey/convey"
 	"workout/pkg/db"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestDB_AuthService(t *testing.T) {

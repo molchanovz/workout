@@ -3,6 +3,7 @@ package workout
 import (
 	"context"
 	"errors"
+
 	"workout/pkg/db"
 
 	"github.com/vmkteam/embedlog"

@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/go-pg/pg/v10"
-	"github.com/vmkteam/embedlog"
 	"time"
+
 	"workout/pkg/db"
 	"workout/pkg/workout"
+
+	"github.com/go-pg/pg/v10"
+	"github.com/vmkteam/embedlog"
 )
 
 const (

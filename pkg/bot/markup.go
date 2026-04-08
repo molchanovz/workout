@@ -2,10 +2,12 @@ package bot
 
 import (
 	"fmt"
-	"github.com/go-telegram/bot/models"
 	"strconv"
+
 	"workout/pkg/db"
 	"workout/pkg/workout"
+
+	"github.com/go-telegram/bot/models"
 )
 
 func startMarkup() models.InlineKeyboardMarkup {

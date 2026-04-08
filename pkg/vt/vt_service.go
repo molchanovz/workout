@@ -7,9 +7,9 @@ import (
 	"math/rand"
 	"net/http"
 	"time"
-	"workout/pkg/workout"
 
 	"workout/pkg/db"
+	"workout/pkg/workout"
 
 	"github.com/vmkteam/zenrpc/v2"
 	"golang.org/x/crypto/bcrypt"

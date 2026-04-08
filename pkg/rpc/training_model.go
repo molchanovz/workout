@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"time"
+
 	"workout/pkg/workout"
 )
 

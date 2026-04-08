@@ -6,10 +6,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"workout/pkg/workout"
-	"workout/pkg/workout/training"
 
 	"workout/pkg/db"
+	"workout/pkg/workout"
+	"workout/pkg/workout/statistic"
+	"workout/pkg/workout/training"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -54,7 +55,7 @@ type Manager struct {
 	bum    *workout.SiteUserManager
 	tm     *training.Manager
 	cm     *workout.CategoryManager
-	sm     *workout.StatsManager
+	sm     *statistic.StatsManager
 	states *StateStore
 }
 
@@ -64,7 +65,7 @@ func NewManager(dbo db.DB, logger embedlog.Logger) *Manager {
 		bum:    workout.NewSiteUserManager(dbo, logger),
 		tm:     training.NewTrainingManager(dbo, logger),
 		cm:     workout.NewCategoryManager(dbo, logger),
-		sm:     workout.NewStatsManager(dbo, logger),
+		sm:     statistic.NewStatsManager(dbo, logger),
 		states: NewStateStore(),
 	}
 }

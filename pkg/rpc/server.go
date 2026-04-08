@@ -2,9 +2,10 @@ package rpc
 
 import (
 	"net/http"
-	"workout/pkg/workout/training"
 
 	"workout/pkg/db"
+	"workout/pkg/workout/statistic"
+	"workout/pkg/workout/training"
 
 	"github.com/vmkteam/embedlog"
 	zm "github.com/vmkteam/zenrpc-middleware"
@@ -26,10 +27,12 @@ var namespaces = struct {
 	Auth     string
 	Training string
 	Exercise string
+	Stats    string
 }{
 	"auth",
 	"training",
 	"exercise",
+	"stats",
 }
 
 type Options struct {
@@ -37,6 +40,7 @@ type Options struct {
 	DB              db.DB
 	Logger          embedlog.Logger
 	TrainingManager *training.Manager
+	StatsManager    *statistic.StatsManager
 	BotToken        string
 }
 
@@ -69,6 +73,7 @@ func New(opt Options, isDevel bool) zenrpc.Server {
 	rpc.RegisterAll(map[string]zenrpc.Invoker{
 		namespaces.Training: NewTrainingService(opt.Logger, opt.TrainingManager),
 		namespaces.Exercise: NewExerciseService(opt.Logger, opt.DB),
+		namespaces.Stats:    NewStatsService(opt.Logger, opt.StatsManager),
 	})
 
 	return rpc
