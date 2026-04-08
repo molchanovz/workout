@@ -50,8 +50,10 @@ func NewApproach(in *db.Approach) *Approach {
 
 type Training struct {
 	db.Training
-	Date          string `json:"date"`
-	ExerciseCount int    `json:"exerciseCount"`
+	Date          string  `json:"date"`
+	ExerciseCount int     `json:"exerciseCount"`
+	CategoryTitle string  `json:"-"`
+	Name          *string `json:"-"`
 }
 
 func NewTraining(in *db.Training) *Training {

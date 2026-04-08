@@ -68,18 +68,23 @@ func (tm Manager) TrainingListByRange(ctx context.Context, userID int, from, to 
 	}
 
 	result := workout.NewTrainings(trainings)
-	if err := tm.fillExerciseCounts(ctx, trainings, result); err != nil {
+	if err = tm.fillExerciseCounts(ctx, result); err != nil {
 		return nil, err
 	}
+	if err = tm.fillCategoryTitles(ctx, result); err != nil {
+		return nil, err
+	}
+
+	result.SetName()
 	return result, nil
 }
 
 // fillExerciseCounts populates ExerciseCount for each training using a single batch approach query.
-func (tm Manager) fillExerciseCounts(ctx context.Context, dbTrainings []db.Training, trainings workout.Trainings) error {
+func (tm Manager) fillExerciseCounts(ctx context.Context, trainings workout.Trainings) error {
 	// build approachID -> training index map
 	approachToIdx := make(map[int]int)
 	var allApproachIDs []int
-	for i, t := range dbTrainings {
+	for i, t := range trainings {
 		for _, aid := range t.ApproachIDs {
 			approachToIdx[aid] = i
 			allApproachIDs = append(allApproachIDs, aid)
@@ -115,6 +120,121 @@ func (tm Manager) fillExerciseCounts(ctx context.Context, dbTrainings []db.Train
 
 	for idx, exercises := range seenExercises {
 		trainings[idx].ExerciseCount = len(exercises)
+	}
+	return nil
+}
+
+// fillCategoryTitles populates CategoryTitle for each training by finding the dominant root category.
+func (tm Manager) fillCategoryTitles(ctx context.Context, trainings workout.Trainings) error {
+	approachToIdx := make(map[int]int)
+	var allApproachIDs []int
+	for i, t := range trainings {
+		for _, aid := range t.ApproachIDs {
+			approachToIdx[aid] = i
+			allApproachIDs = append(allApproachIDs, aid)
+		}
+	}
+	if len(allApproachIDs) == 0 {
+		return nil
+	}
+
+	approaches, err := tm.tr.ApproachesByFilters(ctx,
+		&db.ApproachSearch{IDs: allApproachIDs, StatusID: workout.Ptr(db.StatusEnabled)},
+		db.PagerNoLimit,
+	)
+	if err != nil {
+		return err
+	}
+
+	trainingExercises := make(map[int]map[int]bool)
+	exerciseSet := make(map[int]bool)
+	for _, a := range approaches {
+		if a.ExerciseID == nil {
+			continue
+		}
+		idx, ok := approachToIdx[a.ID]
+		if !ok {
+			continue
+		}
+		if trainingExercises[idx] == nil {
+			trainingExercises[idx] = make(map[int]bool)
+		}
+		trainingExercises[idx][*a.ExerciseID] = true
+		exerciseSet[*a.ExerciseID] = true
+	}
+	if len(exerciseSet) == 0 {
+		return nil
+	}
+
+	exerciseIDs := make([]int, 0, len(exerciseSet))
+	for id := range exerciseSet {
+		exerciseIDs = append(exerciseIDs, id)
+	}
+
+	exercises, err := tm.tr.ExercisesByFilters(ctx,
+		&db.ExerciseSearch{IDs: exerciseIDs, StatusID: workout.Ptr(db.StatusEnabled)},
+		db.PagerNoLimit,
+		db.WithRelations(db.Columns.Exercise.Category),
+	)
+	if err != nil {
+		return err
+	}
+
+	parentCategorySet := make(map[int]bool)
+	for _, ex := range exercises {
+		if ex.Category != nil && ex.Category.ParentCategoryID != nil {
+			parentCategorySet[*ex.Category.ParentCategoryID] = true
+		}
+	}
+
+	parentCategoryTitle := make(map[int]string)
+	if len(parentCategorySet) > 0 {
+		parentIDs := make([]int, 0, len(parentCategorySet))
+		for id := range parentCategorySet {
+			parentIDs = append(parentIDs, id)
+		}
+		parentCategories, err := tm.tr.CategoriesByFilters(ctx,
+			&db.CategorySearch{IDs: parentIDs, StatusID: workout.Ptr(db.StatusEnabled)},
+			db.PagerNoLimit,
+		)
+		if err != nil {
+			return err
+		}
+		for _, c := range parentCategories {
+			parentCategoryTitle[c.ID] = c.Title
+		}
+	}
+
+	exerciseCategoryTitle := make(map[int]string)
+	for _, ex := range exercises {
+		if ex.Category == nil {
+			continue
+		}
+		title := ex.Category.Title
+		if ex.Category.ParentCategoryID != nil {
+			if parentTitle, ok := parentCategoryTitle[*ex.Category.ParentCategoryID]; ok {
+				title = parentTitle
+			}
+		}
+		exerciseCategoryTitle[ex.ID] = title
+	}
+
+	for idx, exIDs := range trainingExercises {
+		categoryCount := make(map[string]int)
+		for exID := range exIDs {
+			if title, ok := exerciseCategoryTitle[exID]; ok {
+				categoryCount[title]++
+			}
+		}
+		var maxTitle string
+		var maxCount int
+		for title, count := range categoryCount {
+			if count > maxCount {
+				maxCount = count
+				maxTitle = title
+			}
+		}
+		trainings[idx].CategoryTitle = maxTitle
 	}
 	return nil
 }

@@ -522,6 +522,11 @@ func (TrainingService) SMD() smd.ServiceInfo {
 									Name: "exerciseCount",
 									Type: smd.Integer,
 								},
+								{
+									Name:     "name",
+									Optional: true,
+									Type:     smd.String,
+								},
 							},
 						},
 					},
@@ -581,6 +586,11 @@ func (TrainingService) SMD() smd.ServiceInfo {
 						{
 							Name: "exerciseCount",
 							Type: smd.Integer,
+						},
+						{
+							Name:     "name",
+							Optional: true,
+							Type:     smd.String,
 						},
 						{
 							Name: "exercises",
@@ -734,6 +744,11 @@ func (TrainingService) SMD() smd.ServiceInfo {
 						{
 							Name: "exerciseCount",
 							Type: smd.Integer,
+						},
+						{
+							Name:     "name",
+							Optional: true,
+							Type:     smd.String,
 						},
 					},
 				},

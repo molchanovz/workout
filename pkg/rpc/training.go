@@ -87,7 +87,9 @@ func (s TrainingService) List(ctx context.Context, date, from, to *string) ([]Tr
 		return nil, err
 	}
 
-	return NewTrainings(list), nil
+	newList := NewTrainings(list)
+
+	return newList, nil
 }
 
 // Get returns a full training with exercises and approaches.

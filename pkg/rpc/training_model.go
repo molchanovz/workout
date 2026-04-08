@@ -64,6 +64,7 @@ type Training struct {
 	StatusID      int        `json:"statusId,omitempty"`
 	Date          string     `json:"date"`
 	ExerciseCount int        `json:"exerciseCount"`
+	Name          *string    `json:"name"`
 }
 
 func NewTraining(in *workout.Training) *Training {
@@ -80,5 +81,6 @@ func NewTraining(in *workout.Training) *Training {
 		StatusID:      in.StatusID,
 		Date:          in.Date,
 		ExerciseCount: in.ExerciseCount,
+		Name:          in.Name,
 	}
 }

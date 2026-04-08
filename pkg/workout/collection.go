@@ -7,3 +7,12 @@ package workout
 //colgen:Approach:MapP(db)
 //colgen:Exercise:MapP(db)
 //colgen:Category:MapP(db)
+
+func (ll Trainings) SetName() {
+	for i := range ll {
+		if ll[i].CategoryTitle != "" {
+			name := ll[i].CategoryTitle
+			ll[i].Name = &name
+		}
+	}
+}
