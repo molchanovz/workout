@@ -68,6 +68,32 @@ type Training struct {
 	Name          *string    `json:"name"`
 }
 
+// SuggestedCategory is a root muscle-group bucket in a suggestion.
+type SuggestedCategory struct {
+	ID    int    `json:"id"`
+	Title string `json:"title"`
+}
+
+// SuggestedExercise is one exercise the algorithm proposes. Sets/reps/weight
+// are filled in later — the suggestion is exercises-only.
+type SuggestedExercise struct {
+	ExerciseID    int    `json:"exerciseId"`
+	Title         string `json:"title"`
+	CategoryID    int    `json:"categoryId"`
+	CategoryTitle string `json:"categoryTitle"`
+	// Frequency — how many approaches of this exercise the user did in
+	// the lookback window. Shown in the UI as "почему это в списке".
+	Frequency int `json:"frequency"`
+}
+
+// SuggestedTraining is what `training.Suggest` returns.
+type SuggestedTraining struct {
+	Mode       string              `json:"mode"`
+	Date       string              `json:"date"`
+	Categories []SuggestedCategory `json:"categories"`
+	Exercises  []SuggestedExercise `json:"exercises"`
+}
+
 func NewTraining(in *workout.Training) *Training {
 	if in == nil {
 		return nil

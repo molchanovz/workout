@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"workout/pkg/workout/suggest"
 	"workout/pkg/workout/training"
 
 	"github.com/vmkteam/embedlog"
@@ -300,6 +301,92 @@ func (s TrainingService) UpdateTimedApproach(ctx context.Context, approachId, du
 		return false, newInternalError(err)
 	}
 	return true, nil
+}
+
+// Suggest proposes exercises for today's training based on recent history
+// and the chosen body-part mode.
+//
+//zenrpc:mode Body-part mode: "fullbody" | "upper" | "lower"
+//zenrpc:return Suggested exercises with sets/reps/weight prefilled
+//zenrpc:400 Invalid mode
+//zenrpc:401 Unauthorized
+//zenrpc:500 Internal Error
+func (s TrainingService) Suggest(ctx context.Context, mode string) (*SuggestedTraining, error) {
+	user := SiteUserFromContext(ctx)
+	if user == nil {
+		return nil, errUnauthorized
+	}
+
+	m, err := parseSuggestMode(mode)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := s.tm.Suggest(ctx, user.ID, m)
+	if err != nil {
+		return nil, newInternalError(err)
+	}
+
+	return newSuggestedTraining(mode, result), nil
+}
+
+// ApplySuggestion ensures each exercise is present in the training.
+// For any exercise not yet in the training, adds one empty approach as a
+// placeholder; reps/weight/duration are filled in later via UpdateApproach.
+//
+//zenrpc:trainingId Training ID
+//zenrpc:exerciseIds Exercise IDs to add to the training
+//zenrpc:return Success
+//zenrpc:401 Unauthorized
+//zenrpc:500 Internal Error
+func (s TrainingService) ApplySuggestion(ctx context.Context, trainingId int, exerciseIds []int) (bool, error) {
+	user := SiteUserFromContext(ctx)
+	if user == nil {
+		return false, errUnauthorized
+	}
+
+	if err := s.tm.ApplySuggestion(ctx, user.ID, trainingId, exerciseIds); err != nil {
+		return false, newInternalError(err)
+	}
+	return true, nil
+}
+
+func parseSuggestMode(mode string) (suggest.Mode, error) {
+	switch mode {
+	case "fullbody", "":
+		return suggest.ModeFullbody, nil
+	case "upper":
+		return suggest.ModeUpper, nil
+	case "lower":
+		return suggest.ModeLower, nil
+	default:
+		return 0, zenrpc.NewStringError(http.StatusBadRequest, `mode must be "fullbody", "upper" or "lower"`)
+	}
+}
+
+func newSuggestedTraining(mode string, in *suggest.SuggestedTraining) *SuggestedTraining {
+	if in == nil {
+		return nil
+	}
+	out := &SuggestedTraining{
+		Mode:       mode,
+		Date:       in.For.Format("2006-01-02"),
+		Categories: make([]SuggestedCategory, 0, len(in.Categories)),
+		Exercises:  make([]SuggestedExercise, 0, len(in.Exercises)),
+	}
+	for _, c := range in.Categories {
+		out.Categories = append(out.Categories, SuggestedCategory{ID: c.ID, Title: c.Title})
+	}
+	for _, e := range in.Exercises {
+		out.Exercises = append(out.Exercises, SuggestedExercise{
+			ExerciseID:    e.ExerciseID,
+			Title:         e.ExerciseName,
+			CategoryID:    e.CategoryID,
+			CategoryTitle: e.CategoryTitle,
+			Frequency:     e.Frequency,
+		})
+	}
+	return out
 }
 
 // DeleteApproach soft-deletes an approach from a training.

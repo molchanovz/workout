@@ -14,7 +14,7 @@ var RPC = struct {
 	AuthService     struct{ TelegramLogin string }
 	ExerciseService struct{ CategoryList, List, AddCategory, Add, Search string }
 	StatsService    struct{ PersonalRecords, WeeklyVolume, Streak string }
-	TrainingService struct{ List, Get, New, Delete, ExerciseList, ApproachList, AddApproach, AddTimedApproach, UpdateApproach, UpdateTimedApproach, DeleteApproach string }
+	TrainingService struct{ List, Get, New, Delete, ExerciseList, ApproachList, AddApproach, AddTimedApproach, UpdateApproach, UpdateTimedApproach, Suggest, ApplySuggestion, DeleteApproach string }
 }{
 	AuthService: struct{ TelegramLogin string }{
 		TelegramLogin: "telegramlogin",
@@ -31,7 +31,7 @@ var RPC = struct {
 		WeeklyVolume:    "weeklyvolume",
 		Streak:          "streak",
 	},
-	TrainingService: struct{ List, Get, New, Delete, ExerciseList, ApproachList, AddApproach, AddTimedApproach, UpdateApproach, UpdateTimedApproach, DeleteApproach string }{
+	TrainingService: struct{ List, Get, New, Delete, ExerciseList, ApproachList, AddApproach, AddTimedApproach, UpdateApproach, UpdateTimedApproach, Suggest, ApplySuggestion, DeleteApproach string }{
 		List:                "list",
 		Get:                 "get",
 		New:                 "new",
@@ -42,6 +42,8 @@ var RPC = struct {
 		AddTimedApproach:    "addtimedapproach",
 		UpdateApproach:      "updateapproach",
 		UpdateTimedApproach: "updatetimedapproach",
+		Suggest:             "suggest",
+		ApplySuggestion:     "applysuggestion",
 		DeleteApproach:      "deleteapproach",
 	},
 }
@@ -1176,6 +1178,124 @@ func (TrainingService) SMD() smd.ServiceInfo {
 					500: "Internal Error",
 				},
 			},
+			"Suggest": {
+				Description: `Suggest proposes exercises for today's training based on recent history
+and the chosen body-part mode.`,
+				Parameters: []smd.JSONSchema{
+					{
+						Name:        "mode",
+						Description: `Body-part mode: "fullbody" | "upper" | "lower"`,
+						Type:        smd.String,
+					},
+				},
+				Returns: smd.JSONSchema{
+					Description: `Suggested exercises with sets/reps/weight prefilled`,
+					Optional:    true,
+					Type:        smd.Object,
+					TypeName:    "SuggestedTraining",
+					Properties: smd.PropertyList{
+						{
+							Name: "mode",
+							Type: smd.String,
+						},
+						{
+							Name: "date",
+							Type: smd.String,
+						},
+						{
+							Name: "categories",
+							Type: smd.Array,
+							Items: map[string]string{
+								"$ref": "#/definitions/SuggestedCategory",
+							},
+						},
+						{
+							Name: "exercises",
+							Type: smd.Array,
+							Items: map[string]string{
+								"$ref": "#/definitions/SuggestedExercise",
+							},
+						},
+					},
+					Definitions: map[string]smd.Definition{
+						"SuggestedCategory": {
+							Type: "object",
+							Properties: smd.PropertyList{
+								{
+									Name: "id",
+									Type: smd.Integer,
+								},
+								{
+									Name: "title",
+									Type: smd.String,
+								},
+							},
+						},
+						"SuggestedExercise": {
+							Type: "object",
+							Properties: smd.PropertyList{
+								{
+									Name: "exerciseId",
+									Type: smd.Integer,
+								},
+								{
+									Name: "title",
+									Type: smd.String,
+								},
+								{
+									Name: "categoryId",
+									Type: smd.Integer,
+								},
+								{
+									Name: "categoryTitle",
+									Type: smd.String,
+								},
+								{
+									Name: "frequency",
+									Description: `Frequency — how many approaches of this exercise the user did in
+the lookback window. Shown in the UI as "почему это в списке".`,
+									Type: smd.Integer,
+								},
+							},
+						},
+					},
+				},
+				Errors: map[int]string{
+					400: "Invalid mode",
+					401: "Unauthorized",
+					500: "Internal Error",
+				},
+			},
+			"ApplySuggestion": {
+				Description: `ApplySuggestion ensures each exercise is present in the training.
+For any exercise not yet in the training, adds one empty approach as a
+placeholder; reps/weight/duration are filled in later via UpdateApproach.`,
+				Parameters: []smd.JSONSchema{
+					{
+						Name:        "trainingId",
+						Description: `Training ID`,
+						Type:        smd.Integer,
+					},
+					{
+						Name:        "exerciseIds",
+						Description: `Exercise IDs to add to the training`,
+						Type:        smd.Array,
+						TypeName:    "[]",
+						Items: map[string]string{
+							"type": smd.Integer,
+						},
+					},
+				},
+				Returns: smd.JSONSchema{
+					Description: `Success`,
+					Type:        smd.Boolean,
+					TypeName:    "Success",
+				},
+				Errors: map[int]string{
+					401: "Unauthorized",
+					500: "Internal Error",
+				},
+			},
 			"DeleteApproach": {
 				Description: `DeleteApproach soft-deletes an approach from a training.`,
 				Parameters: []smd.JSONSchema{
@@ -1410,6 +1530,45 @@ func (s TrainingService) Invoke(ctx context.Context, method string, params json.
 		}
 
 		resp.Set(s.UpdateTimedApproach(ctx, args.ApproachId, args.Duration))
+
+	case RPC.TrainingService.Suggest:
+		var args = struct {
+			Mode string `json:"mode"`
+		}{}
+
+		if zenrpc.IsArray(params) {
+			if params, err = zenrpc.ConvertToObject([]string{"mode"}, params); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		if len(params) > 0 {
+			if err := json.Unmarshal(params, &args); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		resp.Set(s.Suggest(ctx, args.Mode))
+
+	case RPC.TrainingService.ApplySuggestion:
+		var args = struct {
+			TrainingId  int   `json:"trainingId"`
+			ExerciseIds []int `json:"exerciseIds"`
+		}{}
+
+		if zenrpc.IsArray(params) {
+			if params, err = zenrpc.ConvertToObject([]string{"trainingId", "exerciseIds"}, params); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		if len(params) > 0 {
+			if err := json.Unmarshal(params, &args); err != nil {
+				return zenrpc.NewResponseError(nil, zenrpc.InvalidParams, "", err.Error())
+			}
+		}
+
+		resp.Set(s.ApplySuggestion(ctx, args.TrainingId, args.ExerciseIds))
 
 	case RPC.TrainingService.DeleteApproach:
 		var args = struct {
